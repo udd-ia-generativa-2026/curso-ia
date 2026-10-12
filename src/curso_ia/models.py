@@ -35,7 +35,8 @@ def create_model(ref: str, config: Config) -> Model:
         from pydantic_ai.providers.google import GoogleProvider
 
         return GoogleModel(name, provider=GoogleProvider(
-            api_key=config.key("google"), retry_options=HttpRetryOptions(attempts=1),
+            # El nivel gratuito limita solicitudes por minuto: se reintenta con espera creciente ante 429 y 5xx.
+            api_key=config.key("google"), retry_options=HttpRetryOptions(attempts=4),
         ))
     return infer_model(ref)
 
