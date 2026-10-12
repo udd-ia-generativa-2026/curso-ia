@@ -76,7 +76,7 @@ def replies(text):
 def test_without_repo_uses_package_config(tmp_path):
     config = load_config(tmp_path, {})
     assert config.root == tmp_path
-    assert config.models["generation"].startswith("curso:") and config.models["comparison"].startswith("google:")
+    assert config.models["generation"].startswith("google:") and config.models["comparison"].startswith("curso:")
 
 
 def test_colab_secrets_do_not_override_env(tmp_path, monkeypatch):

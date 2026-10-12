@@ -8,10 +8,10 @@
 base_url = ""
 
 [models]
-# Forma proveedor:modelo. "curso:" usa el servidor del curso y "google:" usa Gemini.
+# Forma proveedor:modelo. "google:" usa Gemini (por defecto) y "curso:" usa el servidor del curso.
 # Con una clave propia se puede usar cualquier proveedor de PydanticAI, por ejemplo "openai-chat:...".
-generation = "curso:"
-comparison = "google:gemini-3.8-flash"  # nivel gratuito; probado el 10/10/2026
+generation = "google:gemini-3.5-flash-lite"  # nivel gratuito; respondió el 10/10/2026
+comparison = "curso:"  # el docente completa el modelo del servidor del curso
 
 # Precios en USD por millón de tokens, con su fuente y fecha de consulta.
 # Si un modelo no figura aquí, se usa el precio de lista de genai-prices cuando existe
