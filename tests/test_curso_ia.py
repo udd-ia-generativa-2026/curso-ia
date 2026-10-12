@@ -21,6 +21,7 @@ from curso_ia import (
 from curso_ia import config as config_module
 from curso_ia.cases import Case
 from curso_ia.measure import cost
+from curso_ia.review import build_review_form
 
 CONFIG = """
 [server]
@@ -249,11 +250,12 @@ async def test_review_form_saves_choices(root):
     rows = [await run_case(Agent(replies("reclamo")), case, profile="generation", ref="curso:m", config=config)
             for case in cases.cases]
     path = save_run(rows, cases, config, root / "evidence", lab=1, settings={})
-    controls = review_form(path, config)
-    for choice, reason in controls.values():
+    form = build_review_form(path, config)
+    for choice, reason in form["controls"].values():
         choice.value, reason.value = True, "Coincide con la esperada"
-    reviews = {key: (choice.value, reason.value) for key, (choice, reason) in controls.items()}
-    assert apply_review(path, reviews, config)["review_complete"] is True
+    form["save"](None)
+    assert json.loads(path.read_text())["review_complete"] is True
+    assert review_form(path, config) is None
 
 
 # Contratos con los proveedores, sin red

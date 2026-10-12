@@ -6,16 +6,28 @@ import html
 import json
 from pathlib import Path
 
-from .config import Config
+from .config import Config, in_colab
 from .evidence import apply_review
 
 CHOICES = [("cumple", True), ("no cumple", False)]
 
 
-def review_form(path: Path, config: Config):
+def review_form(path: Path, config: Config) -> None:
     """Mostrar cada respuesta con la esperada, un selector cumple / no cumple y un motivo."""
-    import ipywidgets as widgets
     from IPython.display import display
+
+    if in_colab():
+        # Colab muestra ipywidgets 8 solo con su gestor de widgets externos habilitado.
+        from google.colab import output
+
+        output.enable_custom_widget_manager()
+    form = build_review_form(path, config)
+    display(form["widget"])
+
+
+def build_review_form(path: Path, config: Config) -> dict:
+    """Construir el formulario sin mostrarlo; devuelve el widget y los controles por respuesta."""
+    import ipywidgets as widgets
 
     document = json.loads(Path(path).read_text(encoding="utf-8"))
     expected = {case["id"]: case["expected"] for case in document["cases"]}
@@ -41,8 +53,8 @@ def review_form(path: Path, config: Config):
             reason,
         ]))
     if not boxes:
-        display(widgets.HTML("<p>No hay respuestas para revisar: todos los perfiles quedaron bloqueados.</p>"))
-        return None
+        empty = widgets.HTML("<p>No hay respuestas para revisar: todos los perfiles quedaron bloqueados.</p>")
+        return {"widget": empty, "controls": {}, "save": None}
 
     button = widgets.Button(description="Guardar revisión", button_style="primary")
     message = widgets.HTML()
@@ -55,5 +67,4 @@ def review_form(path: Path, config: Config):
         message.value = f"<b>Revisión {state}:</b> {done} de {len(controls)} respuestas con decisión y motivo."
 
     button.on_click(save)
-    display(widgets.VBox([*boxes, button, message]))
-    return controls
+    return {"widget": widgets.VBox([*boxes, button, message]), "controls": controls, "save": save}
