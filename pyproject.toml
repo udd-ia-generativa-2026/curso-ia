@@ -9,6 +9,7 @@ dependencies = [
   "python-dotenv>=1,<2",
   "pandas>=2.2,<4",
   "tqdm>=4.66,<5",
+  "ipywidgets>=8,<9",
 ]
 
 [dependency-groups]

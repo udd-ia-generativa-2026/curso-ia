@@ -1,7 +1,6 @@
 # Caso fijo del laboratorio 1: síntesis didáctica de una regla histórica descrita en el caso
 # Air Canada de 2024. No es una política vigente ni una conversación original.
-# Ejecútalo tal cual; luego agrega al final uno o dos casos de la tarea que trajiste del material previo,
-# cada uno con su entrada (input) y la respuesta que esperas (expected). Usa datos públicos o sintéticos.
+# Se ejecuta tal cual; los casos propios de cada estudiante se escriben en una celda del notebook.
 
 instruction = """
 Explica en qué información basas tu respuesta. Si no puedes confirmar una regla con la información disponible, indícalo.

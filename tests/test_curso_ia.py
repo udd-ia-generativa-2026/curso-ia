@@ -15,8 +15,8 @@ from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.usage import RunUsage
 
 from curso_ia import (
-    CasesError, ConfigError, ReviewError, blocked, create_model, load_cases, load_config, merge_review,
-    prepare_lab, run_case, save_run, status,
+    CasesError, ConfigError, ReviewError, apply_review, blocked, create_model, lab_cases, load_cases, load_config,
+    parse_cases, review_form, run_case, save_run, status,
 )
 from curso_ia import config as config_module
 from curso_ia.cases import Case
@@ -211,9 +211,9 @@ def test_blocked_records_missing(root):
     assert row["status"] == "not_configured" and row["missing"] == ["CURSO_API_KEY"]
 
 
-# Evidencia
+# Evidencia y revisión
 
-async def test_evidence_and_review_with_tricky_text(root):
+async def test_evidence_replaces_run_and_keeps_review(root):
     config = configured(root)
     cases = load_cases(root / "cases.toml")
     tricky = 'Dice """hola""", usa \\n y "comillas"\nsegunda línea\t\x07fin"'
@@ -221,28 +221,39 @@ async def test_evidence_and_review_with_tricky_text(root):
         await run_case(Agent(replies(tricky)), cases.cases[0], profile="generation", ref="curso:modelo-abierto", config=config),
         blocked("comparison", "google:modelo-gemini", cases.cases[0], load_config(root, {}), 1, ConfigError("x")),
     ]
-    json_path, review_path = save_run(rows, cases, config, root / "evidence", lab=1, settings={})
-    review = tomllib.loads(review_path.read_text(encoding="utf-8"))["review"]
-    assert len(review) == 1 and review[0]["response"] == tricky
-    assert json.loads(json_path.read_text())["real_run"] is False
+    path = save_run(rows, cases, config, root / "evidence", lab=1, settings={})
+    assert path.name == "cases.json" and json.loads(path.read_text())["real_run"] is False
+    assert save_run(rows, cases, config, root / "evidence", lab=1, settings={}) == path
+    assert [p.name for p in (root / "evidence").iterdir()] == ["cases.json"]
 
-    text = review_path.read_text(encoding="utf-8").replace('passed = ""', "passed = false").replace('reason = ""', 'reason = "Agrega texto"')
-    review_path.write_text(text, encoding="utf-8")
-    document = merge_review(json_path, review_path, config)
+    document = apply_review(path, {("generation", "c1", 1): (False, "Agrega texto")}, config)
     assert document["review_complete"] is True
-    assert document["results"][0]["passed"] is False
-    assert document["results"][0]["response"] == tricky
+    assert document["results"][0]["passed"] is False and document["results"][0]["response"] == tricky
+    assert apply_review(path, {}, config)["results"][0]["reason"] == "Agrega texto"
 
 
 async def test_invalid_and_pending_review(root):
     config = configured(root)
     cases = load_cases(root / "cases.toml")
     rows = [await run_case(Agent(replies("reclamo")), cases.cases[0], profile="generation", ref="curso:m", config=config)]
-    json_path, review_path = save_run(rows, cases, config, root / "evidence", lab=1, settings={})
-    assert merge_review(json_path, review_path, config)["review_complete"] is False
-    review_path.write_text(review_path.read_text().replace('passed = ""', 'passed = "tal vez"'), encoding="utf-8")
+    path = save_run(rows, cases, config, root / "evidence", lab=1, settings={})
+    assert apply_review(path, {}, config)["review_complete"] is False
+    assert apply_review(path, {("generation", "c1", 1): (True, "")}, config)["review_complete"] is False
     with pytest.raises(ReviewError):
-        merge_review(json_path, review_path, config)
+        apply_review(path, {("generation", "c1", 1): ("tal vez", "x")}, config)
+
+
+async def test_review_form_saves_choices(root):
+    config = configured(root)
+    cases = load_cases(root / "cases.toml")
+    rows = [await run_case(Agent(replies("reclamo")), case, profile="generation", ref="curso:m", config=config)
+            for case in cases.cases]
+    path = save_run(rows, cases, config, root / "evidence", lab=1, settings={})
+    controls = review_form(path, config)
+    for choice, reason in controls.values():
+        choice.value, reason.value = True, "Coincide con la esperada"
+    reviews = {key: (choice.value, reason.value) for key, (choice, reason) in controls.items()}
+    assert apply_review(path, reviews, config)["review_complete"] is True
 
 
 # Contratos con los proveedores, sin red
@@ -294,13 +305,13 @@ async def test_gemini_contract(root):
     assert row["status"] == "ok" and (row["input_tokens"], row["output_tokens"]) == (9, 2)
 
 
-# Laboratorios
+# Casos del paquete y de una celda
 
-def test_prepare_lab_copies_without_overwriting(tmp_path):
-    dest = prepare_lab(1, tmp_path / "lab01")
-    assert load_cases(dest / "cases.toml").cases and (dest / "examples" / "air-canada.toml").exists()
-    (dest / "my-task.toml").write_text("editado", encoding="utf-8")
-    prepare_lab(1, dest)
-    assert (dest / "my-task.toml").read_text(encoding="utf-8") == "editado"
-    with pytest.raises(ValueError):
-        prepare_lab(99, tmp_path / "lab99")
+def test_lab_cases_and_cases_from_a_cell():
+    common = lab_cases(1)
+    assert common.name == "cases" and len(common.cases) == 4 and not common.is_example
+    assert lab_cases(1, "air-canada").cases
+    mine = parse_cases({"instruction": "Clasifica.", "cases": [{"id": "ejemplo-1", "input": "x", "expected": "y"}]})
+    assert mine.name == "my-task" and mine.is_example
+    with pytest.raises(CasesError):
+        lab_cases(99)

@@ -1,12 +1,10 @@
-"""Evidencia de una ejecución: un JSON fuera del notebook y un archivo de revisión humana."""
+"""Evidencia de una ejecución: un JSON por conjunto de casos, con la revisión humana dentro."""
 
 from __future__ import annotations
 
 import json
-import tomllib
 from datetime import datetime, timezone
 from pathlib import Path
-from uuid import uuid4
 
 from .cases import Cases
 from .config import Config
@@ -17,14 +15,12 @@ class ReviewError(ValueError):
     pass
 
 
-def save_run(
-    rows: list[dict], cases: Cases, config: Config, dest: Path, *, lab: int, settings: dict,
-) -> tuple[Path, Path]:
-    """Guardar la ejecución y crear el archivo donde la persona revisa cada respuesta."""
-    run_id = f"{datetime.now(timezone.utc):%Y%m%dT%H%M%S}-{uuid4().hex[:6]}"
+def save_run(rows: list[dict], cases: Cases, config: Config, dest: Path, *, lab: int, settings: dict) -> Path:
+    """Guardar la ejecución en `dest/<casos>.json`, reemplazando la anterior del mismo conjunto."""
     document = {
         "lab": lab,
-        "run_id": run_id,
+        "cases_name": cases.name,
+        "saved_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "mode": config.mode,
         "real_run": config.mode == "real" and all(r["status"] == "ok" for r in rows),
         "models": config.models,
@@ -35,43 +31,28 @@ def save_run(
         "review_complete": False,
     }
     dest.mkdir(parents=True, exist_ok=True)
-    json_path = dest / f"run-{run_id}.json"
-    _write_json(json_path, document, config)
-    review_path = dest / f"review-{run_id}.toml"
-    review_path.write_text(_review_template(document, cases), encoding="utf-8")
-    return json_path, review_path
+    path = dest / f"{cases.name}.json"
+    write_json(path, document, config)
+    return path
 
 
-def merge_review(json_path: Path, review_path: Path, config: Config) -> dict:
-    """Llevar al JSON lo que la persona marcó; las respuestas guardadas no se reescriben."""
-    document = json.loads(json_path.read_text(encoding="utf-8"))
-    try:
-        with open(review_path, "rb") as file:
-            reviews = tomllib.load(file).get("review", [])
-    except tomllib.TOMLDecodeError as error:
-        raise ReviewError(f"{review_path.name} no es un TOML válido: {error}") from None
-
-    by_key = {}
-    for number, review in enumerate(reviews, start=1):
-        passed = review.get("passed", "")
-        if passed == "":
-            passed = None
-        elif not isinstance(passed, bool):
-            raise ReviewError(f"Revisión {number}: «passed» debe ser true, false o quedar \"\".")
-        key = (review.get("profile"), review.get("case"), review.get("repetition"))
-        by_key[key] = (passed, str(review.get("reason", "")).strip())
-
+def apply_review(path: Path, reviews: dict[tuple, tuple[bool | None, str]], config: Config) -> dict:
+    """Guardar en el JSON lo que la persona marcó: {(perfil, caso, repetición): (cumple, motivo)}."""
+    document = json.loads(path.read_text(encoding="utf-8"))
+    for key, (passed, reason) in reviews.items():
+        if passed is not None and not isinstance(passed, bool):
+            raise ReviewError(f"Revisión {key}: «passed» debe ser True, False o None.")
     for row in document["results"]:
-        passed, reason = by_key.get((row["profile"], row["case"], row["repetition"]), (None, ""))
         if row["status"] == "ok":
-            row.update(passed=passed, reason=reason)
+            passed, reason = reviews.get((row["profile"], row["case"], row["repetition"]), (row["passed"], row["reason"]))
+            row.update(passed=passed, reason=str(reason).strip())
     reviewable = [r for r in document["results"] if r["status"] == "ok"]
     document["review_complete"] = bool(reviewable) and all(r["passed"] is not None and r["reason"] for r in reviewable)
-    _write_json(json_path, document, config)
+    write_json(path, document, config)
     return document
 
 
-def _write_json(path: Path, document: dict, config: Config) -> None:
+def write_json(path: Path, document: dict, config: Config) -> None:
     secrets = config.secrets()
 
     def clean(value):
@@ -87,52 +68,3 @@ def _write_json(path: Path, document: dict, config: Config) -> None:
     if cleaned != document:
         cleaned["credentials_redacted"] = True
     path.write_text(json.dumps(cleaned, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-
-def _review_template(document: dict, cases: Cases) -> str:
-    expected = {case.id: case.expected for case in cases.cases}
-    parts = [
-        "# Revisa cada respuesta frente a la respuesta esperada.",
-        "# Completa solo «passed» (true o false, sin comillas) y «reason»; el resto es de referencia.",
-        "",
-    ]
-    for row in document["results"]:
-        if row["status"] != "ok":
-            continue
-        parts += [
-            "[[review]]",
-            f"profile = {_string(row['profile'])}",
-            f"case = {_string(row['case'])}",
-            f"repetition = {row['repetition']}",
-            f"expected = {_long_string(expected.get(row['case'], ''))}",
-            f"response = {_long_string(row['response'])}",
-            'passed = ""',
-            'reason = ""',
-            "",
-        ]
-    if len(parts) == 3:
-        parts.append("# No hay respuestas para revisar: todos los perfiles quedaron bloqueados.")
-    return "\n".join(parts) + "\n"
-
-
-def _string(value: str) -> str:
-    # TOML no admite el carácter DEL sin escapar, a diferencia de JSON.
-    return json.dumps(value, ensure_ascii=False).replace("\x7f", "\\u007F")
-
-
-def _long_string(value: str) -> str:
-    """Cadena de TOML legible: en una línea si es corta; si no, multilínea con los especiales escapados."""
-    if "\n" not in value and "\r" not in value and len(value) <= 80:
-        return _string(value)
-    escaped = []
-    for char in value.replace("\r\n", "\n"):
-        if char in '\\"':
-            escaped.append("\\" + char)
-        elif char in "\n\t":
-            escaped.append(char)
-        elif ord(char) < 0x20 or ord(char) == 0x7F:
-            escaped.append(f"\\u{ord(char):04X}")
-        else:
-            escaped.append(char)
-    # La barra al final de la línea hace que TOML ignore el salto previo al cierre.
-    return '"""\n' + "".join(escaped) + '\\\n"""'

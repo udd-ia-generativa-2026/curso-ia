@@ -5,15 +5,15 @@ import os
 # El aviso de inicio de PydanticAI promociona un servicio externo; no aporta al curso.
 os.environ.setdefault("PYDANTIC_AI_NO_BANNER", "1")
 
-from .cases import Case, Cases, CasesError, load_cases
+from .cases import Case, Cases, CasesError, lab_cases, load_cases, parse_cases
 from .config import Config, ConfigError, load_config, status
-from .evidence import ReviewError, merge_review, save_run
-from .labs import prepare_lab
+from .evidence import ReviewError, apply_review, save_run
 from .measure import blocked, run_case
 from .models import create_model
+from .review import review_form
 
 __all__ = [
     "Case", "Cases", "CasesError", "Config", "ConfigError", "ReviewError",
-    "blocked", "create_model", "load_cases", "load_config", "merge_review", "prepare_lab", "run_case",
-    "save_run", "status",
+    "apply_review", "blocked", "create_model", "lab_cases", "load_cases", "load_config", "parse_cases",
+    "review_form", "run_case", "save_run", "status",
 ]
