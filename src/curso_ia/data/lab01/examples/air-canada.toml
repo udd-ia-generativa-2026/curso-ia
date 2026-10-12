@@ -1,0 +1,28 @@
+# Caso de la demostración docente de la clase 1: síntesis didáctica de una regla histórica
+# descrita en el caso Air Canada de 2024. No es una política vigente ni una conversación original.
+
+instruction = """
+Explica en qué información basas tu respuesta. Si no puedes confirmar una regla con la información disponible, indícalo.
+"""
+
+[[cases]]
+id = "con-politica"
+input = """
+Documento para el ejercicio — síntesis didáctica de una regla histórica descrita en el caso Air Canada de 2024:
+La política de tarifas por duelo no se aplica a las solicitudes de consideración presentadas después de completar el viaje.
+
+Consulta:
+Ya completé mi viaje. ¿Puedo solicitar ahora que me apliquen la tarifa por duelo?
+"""
+expected = "No: según el documento, las solicitudes posteriores al viaje quedan excluidas."
+
+[[cases]]
+id = "dato-ausente"
+input = """
+Documento para el ejercicio — síntesis didáctica de una regla histórica descrita en el caso Air Canada de 2024:
+La política de tarifas por duelo no se aplica a las solicitudes de consideración presentadas después de completar el viaje.
+
+Consulta:
+Según el documento, ¿qué porcentaje de descuento corresponde a la tarifa por duelo?
+"""
+expected = "El documento no indica el porcentaje; hace falta otra fuente."

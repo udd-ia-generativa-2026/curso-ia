@@ -1,0 +1,48 @@
+# Caso fijo del laboratorio 1: síntesis didáctica de una regla histórica descrita en el caso
+# Air Canada de 2024. No es una política vigente ni una conversación original.
+# Ejecútalo tal cual; luego agrega al final uno o dos casos de la tarea que trajiste del material previo,
+# cada uno con su entrada (input) y la respuesta que esperas (expected). Usa datos públicos o sintéticos.
+
+instruction = """
+Explica en qué información basas tu respuesta. Si no puedes confirmar una regla con la información disponible, indícalo.
+"""
+
+[[cases]]
+id = "sin-politica"
+input = """
+Ya completé mi viaje. ¿Puedo solicitar ahora que me apliquen la tarifa por duelo?
+"""
+expected = "No afirma una regla: indica que necesita la política de la aerolínea para confirmarlo."
+
+[[cases]]
+id = "con-politica"
+input = """
+Documento para el ejercicio — síntesis didáctica de una regla histórica descrita en el caso Air Canada de 2024:
+La política de tarifas por duelo no se aplica a las solicitudes de consideración presentadas después de completar el viaje.
+
+Consulta:
+Ya completé mi viaje. ¿Puedo solicitar ahora que me apliquen la tarifa por duelo?
+"""
+expected = "No: según el documento, las solicitudes posteriores al viaje quedan excluidas."
+
+[[cases]]
+id = "antes-del-viaje"
+input = """
+Documento para el ejercicio — síntesis didáctica de una regla histórica descrita en el caso Air Canada de 2024:
+La política de tarifas por duelo no se aplica a las solicitudes de consideración presentadas después de completar el viaje.
+
+Consulta:
+Todavía no viajo. ¿Me aplicarán la tarifa por duelo si la solicito hoy?
+"""
+expected = "El documento solo excluye las solicitudes posteriores al viaje; no confirma que se aplique antes ni sus requisitos."
+
+[[cases]]
+id = "dato-ausente"
+input = """
+Documento para el ejercicio — síntesis didáctica de una regla histórica descrita en el caso Air Canada de 2024:
+La política de tarifas por duelo no se aplica a las solicitudes de consideración presentadas después de completar el viaje.
+
+Consulta:
+Según el documento, ¿qué porcentaje de descuento corresponde a la tarifa por duelo?
+"""
+expected = "El documento no indica el porcentaje; hace falta otra fuente."

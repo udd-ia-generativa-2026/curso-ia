@@ -1,0 +1,24 @@
+# Configuración del curso sin claves: modelos por rol, servidor y precios de referencia.
+# Las claves van en secretos de Colab o de Codespaces (CURSO_API_KEY, GOOGLE_API_KEY) o en .env local.
+# Un repositorio puede traer su propio config.toml; si no, se usa este, incluido en el paquete.
+# Cada rol se puede cambiar sin editar este archivo con GENERATION_MODEL o COMPARISON_MODEL.
+
+[server]
+# Dirección del servidor del curso, compatible con OpenAI. La completa el docente.
+base_url = ""
+
+[models]
+# Forma proveedor:modelo. "curso:" usa el servidor del curso y "google:" usa Gemini.
+# Con una clave propia se puede usar cualquier proveedor de PydanticAI, por ejemplo "openai-chat:...".
+generation = "curso:"
+comparison = "google:gemini-3.8-flash"  # nivel gratuito; probado el 10/10/2026
+
+# Precios en USD por millón de tokens, con su fuente y fecha de consulta.
+# Si un modelo no figura aquí, se usa el precio de lista de genai-prices cuando existe
+# (salvo el servidor del curso). Ejemplo:
+#
+# [prices."curso:nombre-del-modelo"]
+# input = 0.0
+# output = 0.0
+# source = "Estimación por consumo eléctrico del servidor del curso"
+# date = "DD/MM/AAAA"

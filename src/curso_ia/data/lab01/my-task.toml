@@ -1,0 +1,23 @@
+# Extensión del laboratorio 1: casos de la tarea que trajiste del material previo.
+# Reemplaza el ejemplo por dos o tres casos propios y, en el notebook, usa CASES_FILE = "my-task.toml".
+# Usa datos públicos o sintéticos; nunca datos personales ni confidenciales.
+
+# Instrucción común: qué debe hacer el modelo con cada entrada.
+instruction = """
+Clasifica el mensaje como "reclamo", "consulta" o "felicitación". Responde solo con la categoría.
+"""
+
+# Un bloque [[cases]] por caso: un id corto, la entrada y la respuesta que esperas.
+[[cases]]
+id = "ejemplo-1"
+input = """
+¿A qué hora abre la sucursal de Providencia el sábado?
+"""
+expected = "consulta"
+
+[[cases]]
+id = "ejemplo-2"
+input = """
+Me cobraron dos veces la misma compra y nadie responde mis correos.
+"""
+expected = "reclamo"
