@@ -68,3 +68,21 @@ def write_json(path: Path, document: dict, config: Config) -> None:
     if cleaned != document:
         cleaned["credentials_redacted"] = True
     path.write_text(json.dumps(cleaned, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def review_template(path: Path) -> str:
+    """Código de un diccionario REVIEW para copiar en una celda y completar: (cumple, motivo) por respuesta."""
+    document = json.loads(Path(path).read_text(encoding="utf-8"))
+    expected = {case["id"]: case["expected"] for case in document["cases"]}
+    lines = ["REVIEW = {"]
+    for row in document["results"]:
+        if row["status"] != "ok":
+            continue
+        lines.append(f"    # Esperada: {' '.join(expected.get(row['case'], '').split())}")
+        key = (row["profile"], row["case"], row["repetition"])
+        lines.append(f"    {key!r}: ({row['passed']!r}, {row['reason']!r}),")
+    lines.append("}")
+    if len(lines) == 2:
+        return "# No hay respuestas para revisar: todos los perfiles quedaron bloqueados.\nREVIEW = {}"
+    return "\n".join(lines)
+

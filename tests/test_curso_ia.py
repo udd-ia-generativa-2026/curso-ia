@@ -16,12 +16,11 @@ from pydantic_ai.usage import RunUsage
 
 from curso_ia import (
     CasesError, ConfigError, ReviewError, apply_review, blocked, create_model, lab_cases, load_cases, load_config,
-    parse_cases, review_form, run_case, save_run, status,
+    parse_cases, review_template, run_case, save_run, status,
 )
 from curso_ia import config as config_module
 from curso_ia.cases import Case
 from curso_ia.measure import cost
-from curso_ia.review import build_review_form
 
 CONFIG = """
 [server]
@@ -244,18 +243,19 @@ async def test_invalid_and_pending_review(root):
         apply_review(path, {("generation", "c1", 1): ("tal vez", "x")}, config)
 
 
-async def test_review_form_saves_choices(root):
+async def test_review_template_round_trip(root):
     config = configured(root)
     cases = load_cases(root / "cases.toml")
     rows = [await run_case(Agent(replies("reclamo")), case, profile="generation", ref="curso:m", config=config)
             for case in cases.cases]
     path = save_run(rows, cases, config, root / "evidence", lab=1, settings={})
-    form = build_review_form(path, config)
-    for choice, reason in form["controls"].values():
-        choice.value, reason.value = True, "Coincide con la esperada"
-    form["save"](None)
-    assert json.loads(path.read_text())["review_complete"] is True
-    assert review_form(path, config) is None
+    namespace = {}
+    exec(review_template(path), namespace)
+    assert namespace["REVIEW"] == {("generation", "c1", 1): (None, ""), ("generation", "c2", 1): (None, "")}
+    filled = {key: (True, "Coincide con la esperada") for key in namespace["REVIEW"]}
+    apply_review(path, filled, config)
+    exec(review_template(path), namespace)
+    assert namespace["REVIEW"] == filled
 
 
 # Contratos con los proveedores, sin red
