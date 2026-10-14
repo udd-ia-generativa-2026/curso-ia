@@ -16,7 +16,7 @@ from pydantic_ai.usage import RunUsage
 
 from curso_ia import (
     CasesError, ConfigError, ReviewError, apply_review, blocked, create_model, lab_cases, load_cases, load_config,
-    parse_cases, review_template, run_case, save_run, status,
+    parse_cases, retry_failed, review_template, run_case, save_run, status,
 )
 from curso_ia import config as config_module
 from curso_ia.cases import Case
@@ -201,6 +201,19 @@ async def test_failure_does_not_expose_secrets(root):
     assert "[CREDENCIAL OMITIDA]" in leaked["response"]
     assert "secreto" not in json.dumps([failed, leaked])
 
+
+
+async def test_retry_failed_retries_only_errors(root):
+    config = load_config(root, {"CURSO_MODE": "simulated"})
+    cases = lab_cases(1)
+    first, second = cases.cases[:2]
+    ok = await run_case(Agent(replies("ya respondió")), first, profile="generation", ref="google:m", config=config)
+    failed = {**ok, "case": second.id, "status": "error", "response": "", "error_type": "TimeoutError"}
+    blocked_row = {**ok, "profile": "comparison", "status": "not_configured", "response": ""}
+    rows = await retry_failed([ok, failed, blocked_row], cases, config, max_retries=2, wait_s=0)
+    assert [row["status"] for row in rows] == ["ok", "ok", "not_configured"]
+    assert [row["attempts"] for row in rows] == [1, 2, 1]
+    assert rows[0]["response"] == "ya respondió" and rows[1]["case"] == second.id
 
 def test_cost_from_table_list_price_or_none(root):
     config = configured(root)

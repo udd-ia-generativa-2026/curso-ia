@@ -10,7 +10,7 @@ from time import perf_counter
 from pydantic_ai import Agent
 from pydantic_ai.usage import RunUsage, UsageLimits
 
-from .cases import Case
+from .cases import Case, Cases
 from .config import Config, missing, provider
 
 TIMEOUT_S = 60
@@ -92,3 +92,43 @@ def _version(package: str) -> str:
         return version(package)
     except PackageNotFoundError:
         return "desconocida"
+
+
+async def retry_failed(
+    rows: list[dict], cases: Cases, config: Config, *, settings: dict | None = None,
+    max_retries: int = 2, wait_s: float = 20,
+) -> list[dict]:
+    """Reenviar las consultas con `error`, hasta `max_retries` veces cada una; las bloqueadas por configuración no.
+
+    Cada fila conserva su lugar y registra en `attempts` cuántos intentos usó en total.
+    """
+    from .models import create_model
+
+    by_id = {case.id: case for case in cases.cases}
+    agents: dict[str, Agent] = {}
+    for index, row in enumerate(rows):
+        row.setdefault("attempts", 1)
+        case = by_id.get(row["case"])
+        if row["status"] != "error" or case is None:
+            continue
+        for _ in range(max_retries):
+            if row["profile"] not in agents:
+                try:
+                    agents[row["profile"]] = Agent(
+                        create_model(row["model"], config), instructions=cases.instruction, model_settings=settings or {},
+                    )
+                except Exception:
+                    break
+            # Pausa para no chocar con el límite de solicitudes por minuto del proveedor.
+            await asyncio.sleep(wait_s)
+            attempts = row["attempts"] + 1
+            print(f"Reintento {attempts - 1} de {max_retries}: {row['profile']} · {row['case']}", flush=True)
+            row = await run_case(
+                agents[row["profile"]], case, profile=row["profile"], ref=row["model"], config=config,
+                repetition=row["repetition"],
+            )
+            row["attempts"] = attempts
+            rows[index] = row
+            if row["status"] == "ok":
+                break
+    return rows
