@@ -74,15 +74,25 @@ def review_template(path: Path) -> str:
     """Código de un diccionario REVIEW para copiar en una celda y completar: (cumple, motivo) por respuesta."""
     document = json.loads(Path(path).read_text(encoding="utf-8"))
     expected = {case["id"]: case["expected"] for case in document["cases"]}
-    lines = ["REVIEW = {"]
+    lines = [
+        "# Cómo completar: cada entrada es una respuesta del modelo.",
+        "#   A la izquierda, qué respuesta es: (perfil, caso, repetición). No la cambies.",
+        "#   A la derecha, tu revisión: (cumple, motivo).",
+        "#     cumple: True si la respuesta cumple la esperada o False si no; sin comillas y con mayúscula inicial.",
+        "#     motivo: una frase entre comillas que explique por qué.",
+        "#   Ejemplo: ('generation', 'con-politica', 1): (True, 'Dice que no y cita la regla del documento'),",
+        "REVIEW = {",
+    ]
+    entries = 0
     for row in document["results"]:
         if row["status"] != "ok":
             continue
+        entries += 1
         lines.append(f"    # Esperada: {' '.join(expected.get(row['case'], '').split())}")
         key = (row["profile"], row["case"], row["repetition"])
         lines.append(f"    {key!r}: ({row['passed']!r}, {row['reason']!r}),")
     lines.append("}")
-    if len(lines) == 2:
+    if not entries:
         return "# No hay respuestas para revisar: todos los perfiles quedaron bloqueados.\nREVIEW = {}"
     return "\n".join(lines)
 
