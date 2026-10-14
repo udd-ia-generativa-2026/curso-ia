@@ -4,21 +4,28 @@
 # Cada rol se puede cambiar sin editar este archivo con GENERATION_MODEL o COMPARISON_MODEL.
 
 [server]
-# Dirección del servidor del curso, compatible con OpenAI. La completa el docente.
+# Dirección del servidor del curso, compatible con OpenAI. Se entrega con la clave como secreto CURSO_BASE_URL;
+# el servidor solo funciona durante las clases de los viernes.
 base_url = ""
 
 [models]
 # Forma proveedor:modelo. "google:" usa Gemini (por defecto) y "curso:" usa el servidor del curso.
 # Con una clave propia se puede usar cualquier proveedor de PydanticAI, por ejemplo "openai-chat:...".
-generation = "google:gemini-3.5-flash-lite"  # nivel gratuito; respondió el 10/10/2026
-comparison = "curso:"  # el docente completa el modelo del servidor del curso
+generation = "google:gemini-3.5-flash-lite"  # nivel gratuito: 15 por minuto y 500 por día (AI Studio, 14/10/2026); los Flash solo 20 por día
+comparison = "google:gemma-4-26b-a4b-it"  # pesos abiertos, gratis; en clase también "curso:course-chat" (servidor del curso)
 
 # Precios en USD por millón de tokens, con su fuente y fecha de consulta.
 # Si un modelo no figura aquí, se usa el precio de lista de genai-prices cuando existe
 # (salvo el servidor del curso). Ejemplo:
 #
-# [prices."curso:nombre-del-modelo"]
+# [prices."proveedor:modelo"]
 # input = 0.0
 # output = 0.0
-# source = "Estimación por consumo eléctrico del servidor del curso"
+# source = "..."
 # date = "DD/MM/AAAA"
+
+[prices."curso:course-chat"]
+input = 0.0
+output = 0.0
+source = "Servidor del curso: sin costo para el estudiante; no incluye la electricidad que paga el docente"
+date = "13/10/2026"
