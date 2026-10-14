@@ -12,7 +12,7 @@ base_url = ""
 # Forma proveedor:modelo. "google:" usa Gemini (por defecto) y "curso:" usa el servidor del curso.
 # Con una clave propia se puede usar cualquier proveedor de PydanticAI, por ejemplo "openai-chat:...".
 generation = "google:gemini-3.5-flash-lite"  # nivel gratuito: 15 por minuto y 500 por día (AI Studio, 14/10/2026); los Flash solo 20 por día
-comparison = "google:gemma-4-26b-a4b-it"  # pesos abiertos, gratis; en clase también "curso:course-chat" (servidor del curso)
+comparison = "google:gemma-4-26b-a4b-it"  # pesos abiertos, gratis; en clase también "curso:course-chat" (servidor del curso con Gemma 4 12B)
 
 # Precios en USD por millón de tokens, con su fuente y fecha de consulta.
 # Si un modelo no figura aquí, se usa el precio de lista de genai-prices cuando existe
