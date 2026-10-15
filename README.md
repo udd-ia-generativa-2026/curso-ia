@@ -1,15 +1,15 @@
 # curso-ia · Código común de Aplicaciones de IA Generativa
 
-Paquete del curso: configuración de modelos por rol, casos de prueba, medición de tokens, latencia y costo, y evidencia con revisión humana. Cada laboratorio agrega lo que necesita; antes de cada clase se marcará con una etiqueta (`lab01`, `lab02`, …) y los enlaces apuntarán a ella. Mientras tanto apuntan a `main`.
+Paquete del curso: configuración de modelos por rol, casos de prueba, medición de tokens, latencia y costo, y evidencia con revisión humana. Cada laboratorio agrega lo que necesita; antes de cada clase se marca con una etiqueta (`lab01`, `lab02`, …) y los enlaces de cada laboratorio apuntan a la suya, así lo que cambie después en `main` no altera lo que usan los estudiantes.
 
 ## Usarlo en Colab
 
-Laboratorio 1: [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/main/notebooks/lab01.ipynb)
+Laboratorio 1: [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/lab01/notebooks/lab01.ipynb)
 
 La primera celda de cada notebook instala el paquete:
 
 ```
-%pip install -q --upgrade "curso-ia @ git+https://github.com/udd-ia-generativa-2026/curso-ia@main"
+%pip install -q --upgrade "curso-ia @ git+https://github.com/udd-ia-generativa-2026/curso-ia@lab01"
 ```
 
 Las claves van en **Secretos** de Colab con los nombres `CURSO_API_KEY` y `GOOGLE_API_KEY`; nunca en una celda. Instalarlo no requiere cuenta de GitHub.
