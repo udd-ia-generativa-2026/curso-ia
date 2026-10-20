@@ -1,0 +1,350 @@
+{
+  "name": "development-example",
+  "status": "Ejemplos didácticos revisados para probar el circuito; no son el dominio ganador ni la muestra evaluada definitiva.",
+  "reference_status": "Referencia didáctica del docente; revisión de la muestra del laboratorio pendiente.",
+  "prompt_examples": [
+    {
+      "id": "example-01",
+      "text": "El pedido E-101 llegó quebrado. Quiero que me envíen otro.",
+      "reference": {
+        "order_id": "E-101",
+        "requested_action": "replacement",
+        "amount": null
+      }
+    },
+    {
+      "id": "example-02",
+      "text": "Solicito el reembolso del pedido E-102. El comprobante indica un monto de 0 pesos.",
+      "reference": {
+        "order_id": "E-102",
+        "requested_action": "refund",
+        "amount": 0
+      }
+    }
+  ],
+  "cases": [
+    {
+      "id": "case-01",
+      "document": "documents/case-01.txt",
+      "reference": {
+        "order_id": "S-301",
+        "requested_action": "replacement",
+        "amount": null
+      },
+      "annotation_note": "Reemplazo explícito; el mensaje no informa monto.",
+      "prepared_outputs": {
+        "baseline": {
+          "order_id": {
+            "value": "S-301",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "amount": {
+            "value": 25990,
+            "declared_confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "order_id": {
+            "value": "S-301",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "replacement",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "amount": {
+            "value": null,
+            "declared_confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-02",
+      "document": "documents/case-02.txt",
+      "reference": {
+        "order_id": "S-302",
+        "requested_action": "refund",
+        "amount": 0
+      },
+      "annotation_note": "Cero aparece explícitamente y no equivale a un monto desconocido.",
+      "prepared_outputs": {
+        "baseline": {
+          "order_id": {
+            "value": "S-302",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "amount": {
+            "value": null,
+            "declared_confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "order_id": {
+            "value": "S-302",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "amount": {
+            "value": 0,
+            "declared_confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-03",
+      "document": "documents/case-03.txt",
+      "reference": {
+        "order_id": "S-303",
+        "requested_action": "replacement",
+        "amount": 14990
+      },
+      "annotation_note": "La negación excluye el reembolso.",
+      "prepared_outputs": {
+        "baseline": {
+          "order_id": {
+            "value": "S-303",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "replacement",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "amount": {
+            "value": 14990,
+            "declared_confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "order_id": {
+            "value": "S-303",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "replacement",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "amount": {
+            "value": 14990,
+            "declared_confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-04",
+      "document": "documents/case-04.txt",
+      "reference": {
+        "order_id": "S-304",
+        "requested_action": null,
+        "amount": null
+      },
+      "annotation_note": "El daño no permite inferir qué acción solicita la persona.",
+      "prepared_outputs": {
+        "baseline": {
+          "order_id": {
+            "value": "S-304",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "amount": {
+            "value": null,
+            "declared_confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "order_id": {
+            "value": "S-304",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "amount": {
+            "value": null,
+            "declared_confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-05",
+      "document": "documents/case-05.txt",
+      "reference": {
+        "order_id": null,
+        "requested_action": "refund",
+        "amount": 9990
+      },
+      "annotation_note": "No completar el identificador desde ejemplos ni desde conocimiento externo.",
+      "prepared_outputs": {
+        "baseline": {
+          "order_id": {
+            "value": null,
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "amount": {
+            "value": 9990,
+            "declared_confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "order_id": {
+            "value": null,
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "amount": {
+            "value": 9990,
+            "declared_confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-06",
+      "document": "documents/case-06.txt",
+      "reference": {
+        "order_id": "S-306",
+        "requested_action": null,
+        "amount": 15990
+      },
+      "annotation_note": "La regla didáctica exige una sola acción; registrar el conflicto y solicitar aclaración.",
+      "prepared_outputs": {
+        "baseline": {
+          "order_id": {
+            "value": "S-306",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "replacement",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "amount": {
+            "value": 15990,
+            "declared_confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "order_id": {
+            "value": "S-306",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "amount": {
+            "value": 15990,
+            "declared_confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-02-image",
+      "document": "documents/case-02.png",
+      "reference": {
+        "order_id": "S-302",
+        "requested_action": "refund",
+        "amount": 0
+      },
+      "annotation_note": "Cero aparece explícitamente y no equivale a un monto desconocido.",
+      "prepared_outputs": {
+        "baseline": {
+          "order_id": {
+            "value": "S-302",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "amount": {
+            "value": null,
+            "declared_confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "order_id": {
+            "value": "S-302",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "declared_confidence": 0.9,
+            "evidence": null
+          },
+          "amount": {
+            "value": 0,
+            "declared_confidence": 0.9,
+            "evidence": null
+          }
+        }
+      },
+      "paired_with": "case-02"
+    }
+  ]
+}

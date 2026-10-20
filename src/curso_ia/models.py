@@ -12,9 +12,16 @@ TIMEOUT_S = 40.0
 SIMULATED_RESPONSE = "Respuesta simulada para comprobar el circuito; no proviene de ningún modelo."
 
 
-def create_model(ref: str, config: Config) -> Model:
-    """`curso:` usa el servidor del curso; `google:` usa Gemini; el resto, la clave propia del estudiante."""
+def create_model(ref: str, config: Config, *, simulated_output: dict | None = None) -> Model:
+    """Resolver el proveedor; `simulated_output` solo interviene en modo simulado.
+
+    `curso:` usa el servidor del curso; `google:` usa Gemini; el resto, la clave propia del estudiante.
+    """
     if config.mode == "simulated":
+        if simulated_output is not None:
+            from pydantic_ai.models.test import TestModel
+
+            return TestModel(custom_output_args=simulated_output)
         return simulated_model()
     if lacking := missing(ref, config):
         raise ConfigError(f"Falta configurar: {', '.join(lacking)}.")
