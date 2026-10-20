@@ -33,7 +33,7 @@ class FakeServer(BaseHTTPRequestHandler):
             self.send(400, {"error": {"message": f"Fallo deliberado {KEY}", "type": "invalid_request_error"}})
             return
         function_name = body["tools"][0]["function"]["name"]
-        args = {name: {"value": value, "declared_confidence": 0.9, "evidence": None}
+        args = {name: {"value": value, "confidence": 0.9, "evidence": None}
                 for name, value in {"order_id": "S-301", "requested_action": "refund", "amount": 25990}.items()}
         self.send(200, {
             "id": "local-test", "object": "chat.completion", "created": 0, "model": body["model"],
@@ -85,12 +85,11 @@ def execute(extra_env: dict) -> dict:
         schema_cell = next(c.source for c in notebook.cells if c.cell_type == "code" and "class Extraction(" in c.source)
         metric_cell = next(c.source for c in notebook.cells if c.cell_type == "code" and "details = []" in c.source)
         import pandas as pd
-        from pydantic import BaseModel, ConfigDict, Field, ValidationError
-        from typing import Generic, Literal, TypeVar
+        from pydantic import BaseModel, Field
+        from typing import Literal
         from curso_ia import load_json
-        namespace.update(pd=pd, BaseModel=BaseModel, ConfigDict=ConfigDict, Field=Field,
-                         ValidationError=ValidationError, Generic=Generic, Literal=Literal,
-                         TypeVar=TypeVar, load_json=load_json, __name__="__main__")
+        namespace.update(pd=pd, BaseModel=BaseModel, Field=Field, Literal=Literal,
+                         load_json=load_json, __name__="__main__")
         exec(compile(schema_cell, "lab02-schema", "exec", dont_inherit=True), namespace)
         exec(metric_cell, namespace)
         metrics = namespace["metrics"]
@@ -129,6 +128,9 @@ if __name__ == "__main__":
     assert len(REQUESTS) == 14
     assert local["checked_failed"] == {"baseline": 3, "few_shot": 0}
     assert all(row["input_tokens"] == 20 for row in local["results"] if row["status"] == "ok")
+    assert all(isinstance(row["latency_ms"], int) for row in local["results"])
+    # Las versiones se alternan por documento para no cargar a una sola la lentitud pasajera.
+    assert [row["variant"] for row in local["results"][:4]] == ["baseline", "few_shot"] * 2
     assert any("data:image/png;base64," in json.dumps(request) for request in REQUESTS)
     assert "prepared_outputs" not in json.dumps(REQUESTS)
     assert "annotation_note" not in json.dumps(REQUESTS)

@@ -8,13 +8,13 @@ os.environ.setdefault("PYDANTIC_AI_NO_BANNER", "1")
 from .cases import Case, Cases, CasesError, lab_cases, load_cases, parse_cases
 from .config import Config, ConfigError, load_config, status
 from .evidence import ReviewError, apply_review, review_template, save_run
-from .files import document_input, lab_resource, load_json, save_experiment
-from .measure import blocked, retry_failed, run_case
+from .files import document_input, lab_resource, load_dataset, load_json, save_experiment, show_document
+from .measure import blocked, retry_failed, run_case, timed_run
 from .models import create_model
 
 __all__ = [
     "Case", "Cases", "CasesError", "Config", "ConfigError", "ReviewError",
     "apply_review", "blocked", "create_model", "lab_cases", "load_cases", "load_config", "parse_cases",
-    "retry_failed", "review_template", "run_case", "save_run", "status",
-    "document_input", "lab_resource", "load_json", "save_experiment",
+    "retry_failed", "review_template", "run_case", "save_run", "status", "timed_run",
+    "document_input", "lab_resource", "load_dataset", "load_json", "save_experiment", "show_document",
 ]

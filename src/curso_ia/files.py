@@ -31,6 +31,28 @@ def load_json(path: Path | Traversable) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_dataset(lab: int, path: Path | None = None) -> dict:
+    """Leer el manifiesto y agregar a cada caso la ruta de su documento (`case["path"]`)."""
+    manifest = Path(path) if path else lab_resource(lab, "cases.json")
+    dataset = load_json(manifest)
+    for case in dataset["cases"]:
+        case["path"] = manifest.parent / case["document"] if path else lab_resource(lab, case["document"])
+    return dataset
+
+
+def show_document(path: Path | Traversable) -> None:
+    """Mostrar en el notebook un texto o una imagen tal como la recibirá el modelo."""
+    from IPython.display import Image, display
+
+    content = document_input(path)
+    if isinstance(content, str):
+        print(content)
+    elif content.media_type.startswith("image/"):
+        display(Image(data=content.data))
+    else:
+        print("Documento binario:", content.media_type, "· revisa el original.")
+
+
 def document_input(path: Path | Traversable) -> str | BinaryContent:
     """Leer texto o adjuntar bytes; no reconoce ni completa el contenido del documento."""
     suffix = Path(path.name).suffix.lower()

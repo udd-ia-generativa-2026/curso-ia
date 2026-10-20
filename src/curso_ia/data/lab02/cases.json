@@ -36,34 +36,34 @@
         "baseline": {
           "order_id": {
             "value": "S-301",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
             "value": "refund",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "amount": {
             "value": 25990,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           }
         },
         "few_shot": {
           "order_id": {
             "value": "S-301",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
             "value": "replacement",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "amount": {
             "value": null,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           }
         }
@@ -82,34 +82,34 @@
         "baseline": {
           "order_id": {
             "value": "S-302",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
             "value": "refund",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "amount": {
             "value": null,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           }
         },
         "few_shot": {
           "order_id": {
             "value": "S-302",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
             "value": "refund",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "amount": {
             "value": 0,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           }
         }
@@ -128,34 +128,34 @@
         "baseline": {
           "order_id": {
             "value": "S-303",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
             "value": "replacement",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "amount": {
             "value": 14990,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           }
         },
         "few_shot": {
           "order_id": {
             "value": "S-303",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
             "value": "replacement",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "amount": {
             "value": 14990,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           }
         }
@@ -174,34 +174,34 @@
         "baseline": {
           "order_id": {
             "value": "S-304",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
             "value": "refund",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "amount": {
             "value": null,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           }
         },
         "few_shot": {
           "order_id": {
             "value": "S-304",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
             "value": "refund",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "amount": {
             "value": null,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           }
         }
@@ -220,34 +220,34 @@
         "baseline": {
           "order_id": {
             "value": null,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
             "value": "refund",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "amount": {
             "value": 9990,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           }
         },
         "few_shot": {
           "order_id": {
             "value": null,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
             "value": "refund",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "amount": {
             "value": 9990,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           }
         }
@@ -266,34 +266,34 @@
         "baseline": {
           "order_id": {
             "value": "S-306",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
             "value": "replacement",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "amount": {
             "value": 15990,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           }
         },
         "few_shot": {
           "order_id": {
             "value": "S-306",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
             "value": null,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "amount": {
             "value": 15990,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           }
         }
@@ -312,34 +312,34 @@
         "baseline": {
           "order_id": {
             "value": "S-302",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
             "value": "refund",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "amount": {
             "value": null,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           }
         },
         "few_shot": {
           "order_id": {
             "value": "S-302",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
             "value": "refund",
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           },
           "amount": {
             "value": 0,
-            "declared_confidence": 0.9,
+            "confidence": 0.9,
             "evidence": null
           }
         }

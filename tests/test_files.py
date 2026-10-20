@@ -4,7 +4,10 @@ import pytest
 from pydantic import BaseModel
 from pydantic_ai import Agent, BinaryContent
 
-from curso_ia import create_model, document_input, lab_resource, load_config, load_json, save_experiment
+from curso_ia import (
+    create_model, document_input, lab_resource, load_config, load_dataset, load_json, save_experiment,
+    show_document, timed_run,
+)
 
 
 def test_installed_resources_and_document_formats(tmp_path):
@@ -90,3 +93,31 @@ async def test_google_binary_input_and_typed_output_without_provider_calls():
         image = document_input(lab_resource(2, "documents/case-02.png"))
         result = await Agent(model, output_type=Result).run(["Extrae el monto de la imagen.", image])
     assert len(received) == 1 and result.output.amount == 0
+
+
+def test_dataset_paths_point_to_each_document(tmp_path):
+    dataset = load_dataset(2)
+    assert all(case["path"].name == case["document"].split("/")[-1] for case in dataset["cases"])
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "a.txt").write_text("Pedido Z-1", encoding="utf-8")
+    (tmp_path / "cases.json").write_text(json.dumps({"cases": [{"id": "a", "document": "docs/a.txt"}]}))
+    own = load_dataset(2, tmp_path / "cases.json")
+    assert document_input(own["cases"][0]["path"]) == "Pedido Z-1"
+
+
+def test_show_document_prints_text(capsys):
+    show_document(lab_resource(2, "documents/case-01.txt"))
+    assert capsys.readouterr().out.strip()
+
+
+async def test_timed_run_records_output_or_error(tmp_path):
+    class Result(BaseModel):
+        value: int | None
+
+    config = load_config(tmp_path, {"CURSO_MODE": "simulated"})
+    agent = Agent(create_model("google:unused", config, simulated_output={"value": 3}), output_type=Result)
+    row = await timed_run(agent, ["Documento"], ref="google:unused", config=config)
+    assert row["status"] == "ok" and row["output"] == {"value": 3} and row["latency_ms"] is None
+    failing = Agent(create_model("google:unused", config, simulated_output={"value": "x"}), output_type=Result)
+    row = await timed_run(failing, ["Documento"], ref="google:unused", config=config)
+    assert row["status"] == "error" and row["output"] is None and "error_type" in row

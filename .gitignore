@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Evidencia que genera el notebook al ejecutarse aquí; se versiona en el repositorio de cada equipo
+/labs/

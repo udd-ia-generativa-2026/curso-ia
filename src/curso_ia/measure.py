@@ -87,6 +87,34 @@ async def run_case(
     return row
 
 
+async def timed_run(agent: Agent, prompt: list, *, ref: str, config: Config, request_limit: int = 2) -> dict:
+    """Ejecutar una extracción y registrar salida, tokens, costo y latencia; un fallo queda como fila con `error`.
+
+    `request_limit=2` permite que PydanticAI reintente una vez si la salida no cumple el esquema.
+    En modo simulado no se registra latencia: no mide a ningún proveedor.
+    """
+    row = {"model": ref, "mode": config.mode,
+           "utc_time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+           "status": "error", "output": None}
+    start = perf_counter()
+    try:
+        result = await asyncio.wait_for(
+            agent.run(prompt, usage_limits=UsageLimits(request_limit=request_limit)), TIMEOUT_S)
+        row.update(status="ok", output=result.output.model_dump(mode="json"))
+        if config.mode == "real":
+            usage = result.usage
+            row.update(input_tokens=usage.input_tokens, output_tokens=usage.output_tokens,
+                       requests=usage.requests, **cost(ref, usage, config))
+    except Exception as error:
+        # Los mensajes de los SDK pueden incluir claves, direcciones o cuerpos HTTP: solo tipo y código.
+        row["error_type"] = type(error).__name__
+        code = getattr(error, "status_code", None)
+        if isinstance(code, int):
+            row["http_status"] = code
+    row["latency_ms"] = round((perf_counter() - start) * 1000) if config.mode == "real" else None
+    return row
+
+
 def _version(package: str) -> str:
     try:
         return version(package)
