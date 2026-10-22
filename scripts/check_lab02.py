@@ -67,6 +67,8 @@ def execute(extra_env: dict) -> dict:
         for cell in notebook.cells:
             if cell.cell_type == "code" and 'MODE = "simulated"' in cell.source:
                 cell.source = cell.source.replace('MODE = "simulated"', 'MODE = ' + repr(extra_env["CURSO_MODE"]))
+            if cell.cell_type == "code" and 'MODEL = "curso:course-chat"' in cell.source:
+                cell.source = cell.source.replace('MODEL = "curso:course-chat"', 'MODEL = ' + repr(extra_env.get("GENERATION_MODEL", "curso:course-chat")))
             if cell.cell_type == "code" and "RETRY_WAIT_S = 20" in cell.source:
                 cell.source = cell.source.replace("RETRY_WAIT_S = 20", "RETRY_WAIT_S = 0")
         env = {name: value for name, value in os.environ.items()
