@@ -329,7 +329,7 @@
         "flight_date": "2026-11-06",
         "delay_minutes": 95
       },
-      "annotation_note": "Pide una devolución, aunque sea del equipaje; el monto es el del pasaje, no el reclamado; «hoy» se resuelve con la fecha del registro.",
+      "annotation_note": "Caso de discusión: pide devolver lo pagado por el equipaje y no el pasaje; según la política es refund (devolver dinero, de cualquier monto), aunque puede leerse como nulo. El monto es el del pasaje, no el reclamado; «hoy» se resuelve con la fecha del registro.",
       "source_id": "case-05",
       "prepared_outputs": {
         "baseline": {

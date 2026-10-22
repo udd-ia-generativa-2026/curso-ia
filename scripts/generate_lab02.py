@@ -63,7 +63,9 @@ Su vuelo PS 233 del 07/11/2026 fue reprogramado. Nueva hora de salida: 16:30 (ho
 Agente: M. Pérez
 Cliente indica código K9TR3L, vuelo PS 610 de hoy Santiago–Antofagasta. Se confirma en sistema un retraso de llegada de 1 h 35 min. La maleta no llegó en el vuelo. Cliente pide reembolso de los $35.000 que pagó por equipaje adicional; aclara que NO pide devolución del pasaje (pagó $118.900). Se deriva a equipajes.""",
      ["K9TR3L", "refund", 118900, "2026-11-06", 95],
-     "Pide una devolución, aunque sea del equipaje; el monto es el del pasaje, no el reclamado; «hoy» se resuelve con la fecha del registro."),
+     "Caso de discusión: pide devolver lo pagado por el equipaje y no el pasaje; según la política es refund "
+     "(devolver dinero, de cualquier monto), aunque puede leerse como nulo. El monto es el del pasaje, no el reclamado; "
+     "«hoy» se resuelve con la fecha del registro."),
     ("case-06", """@PacificoSurAyuda vuelo PS 101 del 6/11 con como 4 horas de atraso y nadie informa nada!!! reserva Z4XP8C. pagué 210 dólares por este pasaje, quiero mi plata de vuelta""",
      ["Z4XP8C", "refund", None, None, None],
      "Monto solo en dólares, sin conversión; fecha sin año; retraso aproximado."),
