@@ -2,7 +2,7 @@
 """Comprobar el notebook completo sin claves ni proveedores externos.
 
 Recorre una simulación tipada y un servidor HTTP local falso que acepta imágenes
-y devuelve argumentos tipados. Un error deliberado de la consulta (400) comprueba que el
+y devuelve JSON con el esquema pedido. Un error deliberado de la consulta (400) comprueba que el
 denominador no descarta las consultas fallidas; un fallo del servicio (503) comprueba que se
 reintenta una vez. No mide un proveedor real.
 """
@@ -36,16 +36,14 @@ class FakeServer(BaseHTTPRequestHandler):
         if len(REQUESTS) == 3:
             self.send(503, {"error": {"message": "Servicio no disponible", "type": "server_error"}})
             return
-        function_name = body["tools"][0]["function"]["name"]
+        # El servidor del curso recibe la salida tipada como esquema JSON nativo, no como herramienta.
+        assert body["response_format"]["type"] == "json_schema" and "tools" not in body
         args = {name: {"value": value, "confidence": 0.9, "evidence": None}
                 for name, value in {"booking_code": "LTR8KD", "requested_action": "refund", "amount_clp": 89990, "flight_date": "2026-11-06", "delay_minutes": 160}.items()}
         self.send(200, {
             "id": "local-test", "object": "chat.completion", "created": 0, "model": body["model"],
-            "choices": [{"index": 0, "finish_reason": "tool_calls", "message": {
-                "role": "assistant", "content": None, "tool_calls": [{
-                    "id": "typed-output", "type": "function",
-                    "function": {"name": function_name, "arguments": json.dumps(args)},
-                }],
+            "choices": [{"index": 0, "finish_reason": "stop", "message": {
+                "role": "assistant", "content": json.dumps(args),
             }}],
             "usage": {"prompt_tokens": 20, "completion_tokens": 10, "total_tokens": 30},
         })

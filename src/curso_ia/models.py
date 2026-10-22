@@ -35,7 +35,11 @@ def create_model(ref: str, config: Config, *, simulated_output: dict | None = No
         client = AsyncOpenAI(
             base_url=config.course_base_url, api_key=config.key("curso"), max_retries=0, timeout=TIMEOUT_S,
         )
-        return OpenAIChatModel(name, provider=OpenAIProvider(openai_client=client))
+        course = OpenAIProvider(openai_client=client)
+        # Salida tipada nativa: vLLM restringe la respuesta al esquema JSON. Con la llamada a herramienta,
+        # el modelo del servidor a veces respondía en texto o inventaba campos (laboratorio 2, 22/10/2026).
+        profile = {**course.model_profile(name), "default_structured_output_mode": "native"}
+        return OpenAIChatModel(name, provider=course, profile=profile)
     if prov == "google":
         from google.genai.types import HttpRetryOptions
         from pydantic_ai.models.google import GoogleModel
