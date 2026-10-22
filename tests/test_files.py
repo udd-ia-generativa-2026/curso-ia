@@ -1,4 +1,6 @@
 import json
+from datetime import date
+from pathlib import Path
 
 import pytest
 from pydantic import BaseModel
@@ -12,7 +14,8 @@ from curso_ia import (
 
 def test_installed_resources_and_document_formats(tmp_path):
     dataset = load_json(lab_resource(2, "cases.json"))
-    assert len(dataset["cases"]) == 7
+    assert len(dataset["cases"]) == 50
+    assert len(dataset["core_ids"]) == 8
     for case in dataset["cases"]:
         content = document_input(lab_resource(2, case["document"]))
         if case["document"].endswith(".png"):
@@ -121,3 +124,35 @@ async def test_timed_run_records_output_or_error(tmp_path):
     failing = Agent(create_model("google:unused", config, simulated_output={"value": "x"}), output_type=Result)
     row = await timed_run(failing, ["Documento"], ref="google:unused", config=config)
     assert row["status"] == "error" and row["output"] is None and "error_type" in row
+
+
+def test_aviation_annotations_match_the_schema_and_keep_format_pairs():
+    # Validar las 50 anotaciones contra el esquema que realmente verá el estudiante.
+    notebook = json.loads((Path(__file__).parents[1] / "notebooks/lab02.ipynb").read_text())
+    schema = next("".join(cell["source"]) for cell in notebook["cells"]
+                  if "class Extraction(" in "".join(cell["source"]))
+    from typing import Literal
+    from pydantic import Field
+    namespace = {"BaseModel": BaseModel, "Field": Field, "Literal": Literal}
+    exec(compile(schema, "lab02-schema", "exec", dont_inherit=True), namespace)
+    extraction = namespace["Extraction"]
+    dataset = load_dataset(2)
+    cases = {case["id"]: case for case in dataset["cases"]}
+    assert len(cases) == 50 and set(dataset["core_ids"]) <= set(cases)
+    assert not set(cases) & {example["id"] for example in dataset["prompt_examples"]}
+    for case in cases.values():
+        expected = case["reference"]
+        assert set(expected) == set(extraction.model_fields)
+        for output in case["prepared_outputs"].values():
+            extraction.model_validate(output)
+        assert {field: data["value"] for field, data in case["prepared_outputs"]["few_shot"].items()} == expected
+        if expected["flight_date"] is not None:
+            assert date.fromisoformat(expected["flight_date"]).isoformat() == expected["flight_date"]
+        if "paired_with" in case:
+            assert expected == cases[case["paired_with"]]["reference"]
+            assert case["source_id"] == case["paired_with"]
+    assert cases["case-02"]["reference"]["amount_clp"] == 0
+    assert cases["case-02"]["reference"]["delay_minutes"] == 185
+    assert cases["case-04"]["reference"] == {field: None for field in extraction.model_fields}
+    assert cases["case-05"]["reference"]["booking_code"] == "AX0005"
+    assert cases["case-06"]["reference"]["delay_minutes"] is None

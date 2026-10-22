@@ -1,24 +1,44 @@
 {
-  "name": "development-example",
-  "status": "Ejemplos didácticos revisados para probar el circuito; no son el dominio ganador ni la muestra evaluada definitiva.",
-  "reference_status": "Referencia didáctica del docente; revisión de la muestra del laboratorio pendiente.",
+  "name": "aviation-incidents-v1",
+  "metadata": {
+    "created_on": "2026-10-22",
+    "domain": "Incidencias de pasajeros de una aerolínea ficticia",
+    "source": "Documentos sintéticos propios, sin pasajeros ni reservas reales.",
+    "annotation_status": "Referencia propuesta por el asistente; requiere revisión humana.",
+    "prepared_outputs": "Salidas inventadas para simulación; no son resultados de un proveedor.",
+    "limitations": "48 textos de 12 patrones y dos imágenes pareadas: 50 registros, 48 fuentes. No es una muestra representativa ni un conjunto retenido del Hito 1."
+  },
+  "core_ids": [
+    "case-01",
+    "case-02",
+    "case-03",
+    "case-04",
+    "case-05",
+    "case-06",
+    "case-02-image",
+    "case-05-image"
+  ],
   "prompt_examples": [
     {
       "id": "example-01",
-      "text": "El pedido E-101 llegó quebrado. Quiero que me envíen otro.",
+      "text": "Reserva EX1001. Vuelo 2026-12-01. Pasaje CLP 0. Equipaje CLP 15000. Aviso: 1 h 20 min de retraso. No quiero reembolso; pido cambio de vuelo.",
       "reference": {
-        "order_id": "E-101",
-        "requested_action": "replacement",
-        "amount": null
+        "booking_code": "EX1001",
+        "requested_action": "rebooking",
+        "amount_clp": 0,
+        "flight_date": "2026-12-01",
+        "delay_minutes": 80
       }
     },
     {
       "id": "example-02",
-      "text": "Solicito el reembolso del pedido E-102. El comprobante indica un monto de 0 pesos.",
+      "text": "Reservas EX1002 y EX1003, sin señalar cuál es la afectada. Viajo mañana; no hay fecha de envío. Pagué USD 100. Quiero devolución o cambio, aún no decido. Retraso aproximado de una hora.",
       "reference": {
-        "order_id": "E-102",
-        "requested_action": "refund",
-        "amount": 0
+        "booking_code": null,
+        "requested_action": null,
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": null
       }
     }
   ],
@@ -27,15 +47,18 @@
       "id": "case-01",
       "document": "documents/case-01.txt",
       "reference": {
-        "order_id": "S-301",
-        "requested_action": "replacement",
-        "amount": null
+        "booking_code": "AX0001",
+        "requested_action": "rebooking",
+        "amount_clp": 89000,
+        "flight_date": "2026-11-06",
+        "delay_minutes": 0
       },
-      "annotation_note": "Reemplazo explícito; el mensaje no informa monto.",
+      "annotation_note": "Reserva y fecha completas; retraso explícito de cero minutos.",
+      "source_id": "case-01",
       "prepared_outputs": {
         "baseline": {
-          "order_id": {
-            "value": "S-301",
+          "booking_code": {
+            "value": "AX0001",
             "confidence": 0.9,
             "evidence": null
           },
@@ -44,25 +67,45 @@
             "confidence": 0.9,
             "evidence": null
           },
-          "amount": {
-            "value": 25990,
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
             "confidence": 0.9,
             "evidence": null
           }
         },
         "few_shot": {
-          "order_id": {
-            "value": "S-301",
+          "booking_code": {
+            "value": "AX0001",
             "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
-            "value": "replacement",
+            "value": "rebooking",
             "confidence": 0.9,
             "evidence": null
           },
-          "amount": {
-            "value": null,
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
             "confidence": 0.9,
             "evidence": null
           }
@@ -73,15 +116,18 @@
       "id": "case-02",
       "document": "documents/case-02.txt",
       "reference": {
-        "order_id": "S-302",
+        "booking_code": "AX0002",
         "requested_action": "refund",
-        "amount": 0
+        "amount_clp": 0,
+        "flight_date": "2026-11-06",
+        "delay_minutes": 185
       },
-      "annotation_note": "Cero aparece explícitamente y no equivale a un monto desconocido.",
+      "annotation_note": "Pasaje cero, equipaje excluido; 3 h 05 min son 185 minutos.",
+      "source_id": "case-02",
       "prepared_outputs": {
         "baseline": {
-          "order_id": {
-            "value": "S-302",
+          "booking_code": {
+            "value": "AX0002",
             "confidence": 0.9,
             "evidence": null
           },
@@ -90,15 +136,25 @@
             "confidence": 0.9,
             "evidence": null
           },
-          "amount": {
+          "amount_clp": {
             "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 185,
             "confidence": 0.9,
             "evidence": null
           }
         },
         "few_shot": {
-          "order_id": {
-            "value": "S-302",
+          "booking_code": {
+            "value": "AX0002",
             "confidence": 0.9,
             "evidence": null
           },
@@ -107,8 +163,18 @@
             "confidence": 0.9,
             "evidence": null
           },
-          "amount": {
+          "amount_clp": {
             "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 185,
             "confidence": 0.9,
             "evidence": null
           }
@@ -119,42 +185,65 @@
       "id": "case-03",
       "document": "documents/case-03.txt",
       "reference": {
-        "order_id": "S-303",
-        "requested_action": "replacement",
-        "amount": 14990
+        "booking_code": null,
+        "requested_action": "rebooking",
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": null
       },
-      "annotation_note": "La negación excluye el reembolso.",
+      "annotation_note": "Un horario de salida no es una duración de retraso ni una fecha.",
+      "source_id": "case-03",
       "prepared_outputs": {
         "baseline": {
-          "order_id": {
-            "value": "S-303",
+          "booking_code": {
+            "value": null,
             "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
-            "value": "replacement",
+            "value": "rebooking",
             "confidence": 0.9,
             "evidence": null
           },
-          "amount": {
-            "value": 14990,
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
             "confidence": 0.9,
             "evidence": null
           }
         },
         "few_shot": {
-          "order_id": {
-            "value": "S-303",
+          "booking_code": {
+            "value": null,
             "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
-            "value": "replacement",
+            "value": "rebooking",
             "confidence": 0.9,
             "evidence": null
           },
-          "amount": {
-            "value": 14990,
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
             "confidence": 0.9,
             "evidence": null
           }
@@ -165,15 +254,18 @@
       "id": "case-04",
       "document": "documents/case-04.txt",
       "reference": {
-        "order_id": "S-304",
+        "booking_code": null,
         "requested_action": null,
-        "amount": null
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": null
       },
-      "annotation_note": "El daño no permite inferir qué acción solicita la persona.",
+      "annotation_note": "Dos reservas sin resolver, fecha incompleta, USD sin conversión y acción sin decidir.",
+      "source_id": "case-04",
       "prepared_outputs": {
         "baseline": {
-          "order_id": {
-            "value": "S-304",
+          "booking_code": {
+            "value": null,
             "confidence": 0.9,
             "evidence": null
           },
@@ -182,24 +274,44 @@
             "confidence": 0.9,
             "evidence": null
           },
-          "amount": {
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
             "value": null,
             "confidence": 0.9,
             "evidence": null
           }
         },
         "few_shot": {
-          "order_id": {
-            "value": "S-304",
+          "booking_code": {
+            "value": null,
             "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
-            "value": "refund",
+            "value": null,
             "confidence": 0.9,
             "evidence": null
           },
-          "amount": {
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
             "value": null,
             "confidence": 0.9,
             "evidence": null
@@ -211,15 +323,18 @@
       "id": "case-05",
       "document": "documents/case-05.txt",
       "reference": {
-        "order_id": null,
+        "booking_code": "AX0005",
         "requested_action": "refund",
-        "amount": 9990
+        "amount_clp": 89000,
+        "flight_date": "2026-11-06",
+        "delay_minutes": 95
       },
-      "annotation_note": "No completar el identificador desde ejemplos ni desde conocimiento externo.",
+      "annotation_note": "Corrección explícita sobre mensaje reenviado; extraer monto pagado, no monto solicitado.",
+      "source_id": "case-05",
       "prepared_outputs": {
         "baseline": {
-          "order_id": {
-            "value": null,
+          "booking_code": {
+            "value": "AX0005",
             "confidence": 0.9,
             "evidence": null
           },
@@ -228,15 +343,25 @@
             "confidence": 0.9,
             "evidence": null
           },
-          "amount": {
-            "value": 9990,
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 95,
             "confidence": 0.9,
             "evidence": null
           }
         },
         "few_shot": {
-          "order_id": {
-            "value": null,
+          "booking_code": {
+            "value": "AX0005",
             "confidence": 0.9,
             "evidence": null
           },
@@ -245,8 +370,18 @@
             "confidence": 0.9,
             "evidence": null
           },
-          "amount": {
-            "value": 9990,
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 95,
             "confidence": 0.9,
             "evidence": null
           }
@@ -257,32 +392,18 @@
       "id": "case-06",
       "document": "documents/case-06.txt",
       "reference": {
-        "order_id": "S-306",
+        "booking_code": "AX0006",
         "requested_action": null,
-        "amount": 15990
+        "amount_clp": 89000,
+        "flight_date": "2026-11-06",
+        "delay_minutes": null
       },
-      "annotation_note": "La regla didáctica exige una sola acción; registrar el conflicto y solicitar aclaración.",
+      "annotation_note": "Daño no implica devolución; no sumar impuesto incluido; retraso aproximado queda nulo.",
+      "source_id": "case-06",
       "prepared_outputs": {
         "baseline": {
-          "order_id": {
-            "value": "S-306",
-            "confidence": 0.9,
-            "evidence": null
-          },
-          "requested_action": {
-            "value": "replacement",
-            "confidence": 0.9,
-            "evidence": null
-          },
-          "amount": {
-            "value": 15990,
-            "confidence": 0.9,
-            "evidence": null
-          }
-        },
-        "few_shot": {
-          "order_id": {
-            "value": "S-306",
+          "booking_code": {
+            "value": "AX0006",
             "confidence": 0.9,
             "evidence": null
           },
@@ -291,8 +412,2943 @@
             "confidence": 0.9,
             "evidence": null
           },
-          "amount": {
-            "value": 15990,
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0006",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-07",
+      "document": "documents/case-07.txt",
+      "reference": {
+        "booking_code": "AX0007",
+        "requested_action": "rebooking",
+        "amount_clp": 89000,
+        "flight_date": "2026-11-06",
+        "delay_minutes": 90
+      },
+      "annotation_note": "Combinar registro JSON y nota; no interpretar la negación como solicitud de devolución.",
+      "source_id": "case-07",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0007",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 90,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0007",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 90,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-08",
+      "document": "documents/case-08.txt",
+      "reference": {
+        "booking_code": "AX0008",
+        "requested_action": "refund",
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": 0
+      },
+      "annotation_note": "Duración del vuelo no es retraso; fecha relativa sin ancla y monto en EUR quedan nulos.",
+      "source_id": "case-08",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0008",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0008",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-09",
+      "document": "documents/case-09.txt",
+      "reference": {
+        "booking_code": "AX0009",
+        "requested_action": "rebooking",
+        "amount_clp": 89000,
+        "flight_date": "2026-11-06",
+        "delay_minutes": 150
+      },
+      "annotation_note": "Normalizar cantidades escritas, formato de fecha y media hora; sin inferir derechos.",
+      "source_id": "case-09",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0009",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 150,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0009",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 150,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-10",
+      "document": "documents/case-10.txt",
+      "reference": {
+        "booking_code": "AX0010",
+        "requested_action": "rebooking",
+        "amount_clp": 89000,
+        "flight_date": "2026-11-06",
+        "delay_minutes": 45
+      },
+      "annotation_note": "La rectificación explícita resuelve la acción; no conservar dos acciones incompatibles.",
+      "source_id": "case-10",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0010",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 45,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0010",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 45,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-11",
+      "document": "documents/case-11.txt",
+      "reference": {
+        "booking_code": "AX0011",
+        "requested_action": "refund",
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": null
+      },
+      "annotation_note": "Fecha contradictoria, total ilegible e intervalo de retraso no permiten un valor exacto.",
+      "source_id": "case-11",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0011",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0011",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-12",
+      "document": "documents/case-12.txt",
+      "reference": {
+        "booking_code": "AX0012",
+        "requested_action": null,
+        "amount_clp": 0,
+        "flight_date": "2026-11-06",
+        "delay_minutes": 60
+      },
+      "annotation_note": "Correcciones explícitas de monto y retraso; acción aún sin resolver.",
+      "source_id": "case-12",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0012",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 60,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0012",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 60,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-13",
+      "document": "documents/case-13.txt",
+      "reference": {
+        "booking_code": "AX0013",
+        "requested_action": "rebooking",
+        "amount_clp": 90000,
+        "flight_date": "2026-11-07",
+        "delay_minutes": 0
+      },
+      "annotation_note": "Reserva y fecha completas; retraso explícito de cero minutos.",
+      "source_id": "case-13",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0013",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 90000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0013",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 90000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-14",
+      "document": "documents/case-14.txt",
+      "reference": {
+        "booking_code": "AX0014",
+        "requested_action": "refund",
+        "amount_clp": 0,
+        "flight_date": "2026-11-07",
+        "delay_minutes": 185
+      },
+      "annotation_note": "Pasaje cero, equipaje excluido; 3 h 05 min son 185 minutos.",
+      "source_id": "case-14",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0014",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 185,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0014",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 185,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-15",
+      "document": "documents/case-15.txt",
+      "reference": {
+        "booking_code": null,
+        "requested_action": "rebooking",
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": null
+      },
+      "annotation_note": "Un horario de salida no es una duración de retraso ni una fecha.",
+      "source_id": "case-15",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-16",
+      "document": "documents/case-16.txt",
+      "reference": {
+        "booking_code": null,
+        "requested_action": null,
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": null
+      },
+      "annotation_note": "Dos reservas sin resolver, fecha incompleta, USD sin conversión y acción sin decidir.",
+      "source_id": "case-16",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-17",
+      "document": "documents/case-17.txt",
+      "reference": {
+        "booking_code": "AX0017",
+        "requested_action": "refund",
+        "amount_clp": 90000,
+        "flight_date": "2026-11-07",
+        "delay_minutes": 95
+      },
+      "annotation_note": "Corrección explícita sobre mensaje reenviado; extraer monto pagado, no monto solicitado.",
+      "source_id": "case-17",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0017",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 95,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0017",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 90000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 95,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-18",
+      "document": "documents/case-18.txt",
+      "reference": {
+        "booking_code": "AX0018",
+        "requested_action": null,
+        "amount_clp": 89000,
+        "flight_date": "2026-11-07",
+        "delay_minutes": null
+      },
+      "annotation_note": "Daño no implica devolución; no sumar impuesto incluido; retraso aproximado queda nulo.",
+      "source_id": "case-18",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0018",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0018",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-19",
+      "document": "documents/case-19.txt",
+      "reference": {
+        "booking_code": "AX0019",
+        "requested_action": "rebooking",
+        "amount_clp": 90000,
+        "flight_date": "2026-11-07",
+        "delay_minutes": 90
+      },
+      "annotation_note": "Combinar registro JSON y nota; no interpretar la negación como solicitud de devolución.",
+      "source_id": "case-19",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0019",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 90000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 90,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0019",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 90000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 90,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-20",
+      "document": "documents/case-20.txt",
+      "reference": {
+        "booking_code": "AX0020",
+        "requested_action": "refund",
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": 0
+      },
+      "annotation_note": "Duración del vuelo no es retraso; fecha relativa sin ancla y monto en EUR quedan nulos.",
+      "source_id": "case-20",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0020",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0020",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-21",
+      "document": "documents/case-21.txt",
+      "reference": {
+        "booking_code": "AX0021",
+        "requested_action": "rebooking",
+        "amount_clp": 89000,
+        "flight_date": "2026-11-07",
+        "delay_minutes": 150
+      },
+      "annotation_note": "Normalizar cantidades escritas, formato de fecha y media hora; sin inferir derechos.",
+      "source_id": "case-21",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0021",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 150,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0021",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 150,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-22",
+      "document": "documents/case-22.txt",
+      "reference": {
+        "booking_code": "AX0022",
+        "requested_action": "rebooking",
+        "amount_clp": 89000,
+        "flight_date": "2026-11-07",
+        "delay_minutes": 45
+      },
+      "annotation_note": "La rectificación explícita resuelve la acción; no conservar dos acciones incompatibles.",
+      "source_id": "case-22",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0022",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 45,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0022",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 45,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-23",
+      "document": "documents/case-23.txt",
+      "reference": {
+        "booking_code": "AX0023",
+        "requested_action": "refund",
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": null
+      },
+      "annotation_note": "Fecha contradictoria, total ilegible e intervalo de retraso no permiten un valor exacto.",
+      "source_id": "case-23",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0023",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0023",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-24",
+      "document": "documents/case-24.txt",
+      "reference": {
+        "booking_code": "AX0024",
+        "requested_action": null,
+        "amount_clp": 0,
+        "flight_date": "2026-11-07",
+        "delay_minutes": 60
+      },
+      "annotation_note": "Correcciones explícitas de monto y retraso; acción aún sin resolver.",
+      "source_id": "case-24",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0024",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 60,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0024",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-07",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 60,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-25",
+      "document": "documents/case-25.txt",
+      "reference": {
+        "booking_code": "AX0025",
+        "requested_action": "rebooking",
+        "amount_clp": 91000,
+        "flight_date": "2026-11-08",
+        "delay_minutes": 0
+      },
+      "annotation_note": "Reserva y fecha completas; retraso explícito de cero minutos.",
+      "source_id": "case-25",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0025",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 91000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0025",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 91000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-26",
+      "document": "documents/case-26.txt",
+      "reference": {
+        "booking_code": "AX0026",
+        "requested_action": "refund",
+        "amount_clp": 0,
+        "flight_date": "2026-11-08",
+        "delay_minutes": 185
+      },
+      "annotation_note": "Pasaje cero, equipaje excluido; 3 h 05 min son 185 minutos.",
+      "source_id": "case-26",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0026",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 185,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0026",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 185,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-27",
+      "document": "documents/case-27.txt",
+      "reference": {
+        "booking_code": null,
+        "requested_action": "rebooking",
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": null
+      },
+      "annotation_note": "Un horario de salida no es una duración de retraso ni una fecha.",
+      "source_id": "case-27",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-28",
+      "document": "documents/case-28.txt",
+      "reference": {
+        "booking_code": null,
+        "requested_action": null,
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": null
+      },
+      "annotation_note": "Dos reservas sin resolver, fecha incompleta, USD sin conversión y acción sin decidir.",
+      "source_id": "case-28",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-29",
+      "document": "documents/case-29.txt",
+      "reference": {
+        "booking_code": "AX0029",
+        "requested_action": "refund",
+        "amount_clp": 91000,
+        "flight_date": "2026-11-08",
+        "delay_minutes": 95
+      },
+      "annotation_note": "Corrección explícita sobre mensaje reenviado; extraer monto pagado, no monto solicitado.",
+      "source_id": "case-29",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0029",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 95,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0029",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 91000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 95,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-30",
+      "document": "documents/case-30.txt",
+      "reference": {
+        "booking_code": "AX0030",
+        "requested_action": null,
+        "amount_clp": 89000,
+        "flight_date": "2026-11-08",
+        "delay_minutes": null
+      },
+      "annotation_note": "Daño no implica devolución; no sumar impuesto incluido; retraso aproximado queda nulo.",
+      "source_id": "case-30",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0030",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0030",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-31",
+      "document": "documents/case-31.txt",
+      "reference": {
+        "booking_code": "AX0031",
+        "requested_action": "rebooking",
+        "amount_clp": 91000,
+        "flight_date": "2026-11-08",
+        "delay_minutes": 90
+      },
+      "annotation_note": "Combinar registro JSON y nota; no interpretar la negación como solicitud de devolución.",
+      "source_id": "case-31",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0031",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 91000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 90,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0031",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 91000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 90,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-32",
+      "document": "documents/case-32.txt",
+      "reference": {
+        "booking_code": "AX0032",
+        "requested_action": "refund",
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": 0
+      },
+      "annotation_note": "Duración del vuelo no es retraso; fecha relativa sin ancla y monto en EUR quedan nulos.",
+      "source_id": "case-32",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0032",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0032",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-33",
+      "document": "documents/case-33.txt",
+      "reference": {
+        "booking_code": "AX0033",
+        "requested_action": "rebooking",
+        "amount_clp": 89000,
+        "flight_date": "2026-11-08",
+        "delay_minutes": 150
+      },
+      "annotation_note": "Normalizar cantidades escritas, formato de fecha y media hora; sin inferir derechos.",
+      "source_id": "case-33",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0033",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 150,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0033",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 150,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-34",
+      "document": "documents/case-34.txt",
+      "reference": {
+        "booking_code": "AX0034",
+        "requested_action": "rebooking",
+        "amount_clp": 89000,
+        "flight_date": "2026-11-08",
+        "delay_minutes": 45
+      },
+      "annotation_note": "La rectificación explícita resuelve la acción; no conservar dos acciones incompatibles.",
+      "source_id": "case-34",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0034",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 45,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0034",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 45,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-35",
+      "document": "documents/case-35.txt",
+      "reference": {
+        "booking_code": "AX0035",
+        "requested_action": "refund",
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": null
+      },
+      "annotation_note": "Fecha contradictoria, total ilegible e intervalo de retraso no permiten un valor exacto.",
+      "source_id": "case-35",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0035",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0035",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-36",
+      "document": "documents/case-36.txt",
+      "reference": {
+        "booking_code": "AX0036",
+        "requested_action": null,
+        "amount_clp": 0,
+        "flight_date": "2026-11-08",
+        "delay_minutes": 60
+      },
+      "annotation_note": "Correcciones explícitas de monto y retraso; acción aún sin resolver.",
+      "source_id": "case-36",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0036",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 60,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0036",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-08",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 60,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-37",
+      "document": "documents/case-37.txt",
+      "reference": {
+        "booking_code": "AX0037",
+        "requested_action": "rebooking",
+        "amount_clp": 92000,
+        "flight_date": "2026-11-09",
+        "delay_minutes": 0
+      },
+      "annotation_note": "Reserva y fecha completas; retraso explícito de cero minutos.",
+      "source_id": "case-37",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0037",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 92000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0037",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 92000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-38",
+      "document": "documents/case-38.txt",
+      "reference": {
+        "booking_code": "AX0038",
+        "requested_action": "refund",
+        "amount_clp": 0,
+        "flight_date": "2026-11-09",
+        "delay_minutes": 185
+      },
+      "annotation_note": "Pasaje cero, equipaje excluido; 3 h 05 min son 185 minutos.",
+      "source_id": "case-38",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0038",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 185,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0038",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 185,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-39",
+      "document": "documents/case-39.txt",
+      "reference": {
+        "booking_code": null,
+        "requested_action": "rebooking",
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": null
+      },
+      "annotation_note": "Un horario de salida no es una duración de retraso ni una fecha.",
+      "source_id": "case-39",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-40",
+      "document": "documents/case-40.txt",
+      "reference": {
+        "booking_code": null,
+        "requested_action": null,
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": null
+      },
+      "annotation_note": "Dos reservas sin resolver, fecha incompleta, USD sin conversión y acción sin decidir.",
+      "source_id": "case-40",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-41",
+      "document": "documents/case-41.txt",
+      "reference": {
+        "booking_code": "AX0041",
+        "requested_action": "refund",
+        "amount_clp": 92000,
+        "flight_date": "2026-11-09",
+        "delay_minutes": 95
+      },
+      "annotation_note": "Corrección explícita sobre mensaje reenviado; extraer monto pagado, no monto solicitado.",
+      "source_id": "case-41",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0041",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 95,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0041",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 92000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 95,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-42",
+      "document": "documents/case-42.txt",
+      "reference": {
+        "booking_code": "AX0042",
+        "requested_action": null,
+        "amount_clp": 89000,
+        "flight_date": "2026-11-09",
+        "delay_minutes": null
+      },
+      "annotation_note": "Daño no implica devolución; no sumar impuesto incluido; retraso aproximado queda nulo.",
+      "source_id": "case-42",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0042",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0042",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-43",
+      "document": "documents/case-43.txt",
+      "reference": {
+        "booking_code": "AX0043",
+        "requested_action": "rebooking",
+        "amount_clp": 92000,
+        "flight_date": "2026-11-09",
+        "delay_minutes": 90
+      },
+      "annotation_note": "Combinar registro JSON y nota; no interpretar la negación como solicitud de devolución.",
+      "source_id": "case-43",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0043",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 92000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 90,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0043",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 92000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 90,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-44",
+      "document": "documents/case-44.txt",
+      "reference": {
+        "booking_code": "AX0044",
+        "requested_action": "refund",
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": 0
+      },
+      "annotation_note": "Duración del vuelo no es retraso; fecha relativa sin ancla y monto en EUR quedan nulos.",
+      "source_id": "case-44",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0044",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0044",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-45",
+      "document": "documents/case-45.txt",
+      "reference": {
+        "booking_code": "AX0045",
+        "requested_action": "rebooking",
+        "amount_clp": 89000,
+        "flight_date": "2026-11-09",
+        "delay_minutes": 150
+      },
+      "annotation_note": "Normalizar cantidades escritas, formato de fecha y media hora; sin inferir derechos.",
+      "source_id": "case-45",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0045",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 150,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0045",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 150,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-46",
+      "document": "documents/case-46.txt",
+      "reference": {
+        "booking_code": "AX0046",
+        "requested_action": "rebooking",
+        "amount_clp": 89000,
+        "flight_date": "2026-11-09",
+        "delay_minutes": 45
+      },
+      "annotation_note": "La rectificación explícita resuelve la acción; no conservar dos acciones incompatibles.",
+      "source_id": "case-46",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0046",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 45,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0046",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "rebooking",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 45,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-47",
+      "document": "documents/case-47.txt",
+      "reference": {
+        "booking_code": "AX0047",
+        "requested_action": "refund",
+        "amount_clp": null,
+        "flight_date": null,
+        "delay_minutes": null
+      },
+      "annotation_note": "Fecha contradictoria, total ilegible e intervalo de retraso no permiten un valor exacto.",
+      "source_id": "case-47",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0047",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0047",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
+    },
+    {
+      "id": "case-48",
+      "document": "documents/case-48.txt",
+      "reference": {
+        "booking_code": "AX0048",
+        "requested_action": null,
+        "amount_clp": 0,
+        "flight_date": "2026-11-09",
+        "delay_minutes": 60
+      },
+      "annotation_note": "Correcciones explícitas de monto y retraso; acción aún sin resolver.",
+      "source_id": "case-48",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0048",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 60,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0048",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-09",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 60,
             "confidence": 0.9,
             "evidence": null
           }
@@ -303,32 +3359,46 @@
       "id": "case-02-image",
       "document": "documents/case-02.png",
       "reference": {
-        "order_id": "S-302",
+        "booking_code": "AX0002",
         "requested_action": "refund",
-        "amount": 0
+        "amount_clp": 0,
+        "flight_date": "2026-11-06",
+        "delay_minutes": 185
       },
-      "annotation_note": "Cero aparece explícitamente y no equivale a un monto desconocido.",
+      "annotation_note": "Pasaje cero, equipaje excluido; 3 h 05 min son 185 minutos. Imagen con leve giro y ruido; revisar legibilidad.",
+      "source_id": "case-02",
+      "paired_with": "case-02",
       "prepared_outputs": {
         "baseline": {
-          "order_id": {
-            "value": "S-302",
+          "booking_code": {
+            "value": "AX0002",
             "confidence": 0.9,
             "evidence": null
           },
           "requested_action": {
-            "value": "refund",
+            "value": "rebooking",
             "confidence": 0.9,
             "evidence": null
           },
-          "amount": {
-            "value": null,
+          "amount_clp": {
+            "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 185,
             "confidence": 0.9,
             "evidence": null
           }
         },
         "few_shot": {
-          "order_id": {
-            "value": "S-302",
+          "booking_code": {
+            "value": "AX0002",
             "confidence": 0.9,
             "evidence": null
           },
@@ -337,14 +3407,93 @@
             "confidence": 0.9,
             "evidence": null
           },
-          "amount": {
+          "amount_clp": {
             "value": 0,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 185,
             "confidence": 0.9,
             "evidence": null
           }
         }
+      }
+    },
+    {
+      "id": "case-05-image",
+      "document": "documents/case-05.png",
+      "reference": {
+        "booking_code": "AX0005",
+        "requested_action": "refund",
+        "amount_clp": 89000,
+        "flight_date": "2026-11-06",
+        "delay_minutes": 95
       },
-      "paired_with": "case-02"
+      "annotation_note": "Corrección explícita sobre mensaje reenviado; extraer monto pagado, no monto solicitado. Imagen con leve giro y ruido; revisar legibilidad.",
+      "source_id": "case-05",
+      "paired_with": "case-05",
+      "prepared_outputs": {
+        "baseline": {
+          "booking_code": {
+            "value": "AX0005",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": null,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 95,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        },
+        "few_shot": {
+          "booking_code": {
+            "value": "AX0005",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "requested_action": {
+            "value": "refund",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "amount_clp": {
+            "value": 89000,
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "flight_date": {
+            "value": "2026-11-06",
+            "confidence": 0.9,
+            "evidence": null
+          },
+          "delay_minutes": {
+            "value": 95,
+            "confidence": 0.9,
+            "evidence": null
+          }
+        }
+      }
     }
   ]
 }

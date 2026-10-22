@@ -34,7 +34,7 @@ class FakeServer(BaseHTTPRequestHandler):
             return
         function_name = body["tools"][0]["function"]["name"]
         args = {name: {"value": value, "confidence": 0.9, "evidence": None}
-                for name, value in {"order_id": "S-301", "requested_action": "refund", "amount": 25990}.items()}
+                for name, value in {"booking_code": "AX0001", "requested_action": "refund", "amount_clp": 89000, "flight_date": "2026-11-06", "delay_minutes": 0}.items()}
         self.send(200, {
             "id": "local-test", "object": "chat.completion", "created": 0, "model": body["model"],
             "choices": [{"index": 0, "finish_reason": "tool_calls", "message": {
@@ -62,6 +62,9 @@ def execute(extra_env: dict) -> dict:
     with tempfile.TemporaryDirectory(prefix="course-lab02-") as folder:
         destination = Path(folder)
         notebook = nbformat.read(ROOT / "notebooks/lab02.ipynb", as_version=4)
+        for cell in notebook.cells:
+            if cell.cell_type == "code" and 'MODE = "simulated"' in cell.source:
+                cell.source = cell.source.replace('MODE = "simulated"', 'MODE = ' + repr(extra_env["CURSO_MODE"]))
         env = {name: value for name, value in os.environ.items()
                if not name.upper().endswith(("_API_KEY", "_TOKEN", "_SECRET"))}
         env.update(extra_env)
@@ -77,7 +80,16 @@ def execute(extra_env: dict) -> dict:
         raw = path.read_text()
         saved = json.loads(raw)
         assert KEY not in raw
-        assert len(saved["results"]) == 14
+        assert len(saved["results"]) == 16
+        import zipfile
+        archives = list(destination.glob("lab02-*.zip"))
+        assert len(archives) == 1
+        with zipfile.ZipFile(archives[0]) as archive:
+            names = archive.namelist()
+            assert "lab02/evidence/experiment.json" in names
+            for case in saved["cases"]:
+                assert "lab02/" + case["document"] in names
+        assert (destination / "labs/lab02/documents/case-02.png").read_bytes().startswith(b"\x89PNG")
         assert saved["reference_reviewed"] is False
         assert all(not value for value in saved["decisions"].values())
         # Recalcular la celda didáctica en un proceso nuevo: no necesita una API.
@@ -93,7 +105,7 @@ def execute(extra_env: dict) -> dict:
         exec(compile(schema_cell, "lab02-schema", "exec", dont_inherit=True), namespace)
         exec(metric_cell, namespace)
         metrics = namespace["metrics"]
-        assert (metrics["cases"] == 7).all()
+        assert (metrics["cases"] == 8).all()
         saved["checked_correct"] = metrics.groupby(level="variant")["correct"].sum().to_dict()
         saved["checked_failed"] = metrics.groupby(level="variant")["failed"].sum().to_dict()
         # Un fallo frente a una referencia nula nunca cuenta como un acierto.
@@ -111,9 +123,9 @@ def execute(extra_env: dict) -> dict:
 if __name__ == "__main__":
     simulated = execute({"CURSO_MODE": "simulated"})
     assert simulated["simulated"] is True
-    assert simulated["checked_correct"] == {"baseline": 15, "few_shot": 20}
+    assert simulated["checked_correct"] == {"baseline": 34, "few_shot": 40}
     assert all(row["latency_ms"] is None for row in simulated["results"])
-    print("Simulado: 14 salidas tipadas, 15/21 y 20/21; sin revisión humana inventada.")
+    print("Simulado: 16 salidas tipadas, 34/40 y 40/40; sin revisión humana inventada.")
     server = ThreadingHTTPServer(("127.0.0.1", 0), FakeServer)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -125,8 +137,8 @@ if __name__ == "__main__":
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
-    assert len(REQUESTS) == 14
-    assert local["checked_failed"] == {"baseline": 3, "few_shot": 0}
+    assert len(REQUESTS) == 16
+    assert local["checked_failed"] == {"baseline": 5, "few_shot": 0}
     assert all(row["input_tokens"] == 20 for row in local["results"] if row["status"] == "ok")
     assert all(isinstance(row["latency_ms"], int) for row in local["results"])
     # Las versiones se alternan por documento para no cargar a una sola la lentitud pasajera.
@@ -134,7 +146,7 @@ if __name__ == "__main__":
     assert any("data:image/png;base64," in json.dumps(request) for request in REQUESTS)
     assert "prepared_outputs" not in json.dumps(REQUESTS)
     assert "annotation_note" not in json.dumps(REQUESTS)
-    assert "S-306" not in " ".join(
+    assert "AX0006" not in " ".join(
         str(message.get("content", "")) for message in REQUESTS[1]["messages"]
     ), "No se envían las referencias de otros casos."
     print("HTTP local falso: imagen enviada, salida tipada, error conservado, sin claves ni referencias de evaluación en la entrada.")
