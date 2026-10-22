@@ -1,180 +1,173 @@
 #!/usr/bin/env python3
-"""Generar documentos sintéticos y anotaciones del laboratorio de aviación.
+"""Escribir los documentos sintéticos y el manifiesto del laboratorio de aviación.
 
-No consulta modelos ni datos de pasajeros. Para regenerar las imágenes se necesitan
-rsvg-convert e ImageMagick; los estudiantes reciben los PNG ya incluidos.
+No consulta modelos ni datos de pasajeros: los textos están escritos a mano y las
+imágenes son fotos y capturas generadas una vez con Seedream 5 Pro (2K) desde el
+repositorio docente, con su prompt en scripts/lab02-images/. La referencia de cada
+imagen se anotó mirando la imagen, no el prompt.
 """
 
 from __future__ import annotations
 
-import html
 import json
-import subprocess
-import tempfile
-import textwrap
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DEST = ROOT / "src/curso_ia/data/lab02"
 FIELDS = ["booking_code", "requested_action", "amount_clp", "flight_date", "delay_minutes"]
-CORE_IDS = [f"case-{i:02d}" for i in range(1, 7)] + ["case-02-image", "case-05-image"]
+CORE_IDS = [f"case-{i:02d}" for i in range(1, 9)]
+IMAGES = {"case-07": "case-07.jpg", "case-08": "case-08.jpg", "case-15": "case-15.jpg", "case-16": "case-16.jpg"}
 
+# Cada caso: texto (None si es una imagen incluida), referencia según la política de anotación y nota.
+CASES = [
+    ("case-01", """Asunto: Retraso vuelo PS 412 – reserva LTR8KD
 
-def scenario(index: int) -> tuple[str, dict, str]:
-    kind = (index - 1) % 12
-    batch = (index - 1) // 12
-    code = f"AX{index:04d}"
-    other = f"BZ{index:04d}"
-    amount = 89000 + batch * 1000
-    date = f"2026-11-{6 + batch:02d}"
-    short_date = f"{6 + batch:02d}/11/2026"
-    values = [code, "rebooking", amount, date, 0]
-    note = "Reserva y fecha completas; retraso explícito de cero minutos."
-    if kind == 0:
-        text = (f"Reserva {code}. Vuelo del {date}. Pagué {amount} pesos chilenos por el pasaje. "
-                "El vuelo fue cancelado antes de salir: retraso registrado 0 minutos. "
-                "Solicito cambiarme al siguiente vuelo disponible.")
-    elif kind == 1:
-        text = (f"RESERVA {code} | Fecha de vuelo {short_date} (día/mes/año).\n"
-                "Billete de premio: importe efectivamente pagado por el pasaje CLP 0. "
-                "Equipaje adicional: CLP 12.990. Retraso informado: 3 h 05 min. "
-                "No quiero otra fecha; devuélvanme lo pagado por el pasaje.")
-        values = [code, "refund", 0, date, 185]
-        note = "Pasaje cero, equipaje excluido; 3 h 05 min son 185 minutos."
-    elif kind == 2:
-        text = ("Perdí el correo con el localizador y no recuerdo cuánto pagué ni la fecha. "
-                "La pantalla muestra salida a las 18:40. No solicito devolución: necesito viajar "
-                "y pido que me cambien de vuelo. No informaron cuántos minutos de retraso lleva.")
-        values = [None, "rebooking", None, None, None]
-        note = "Un horario de salida no es una duración de retraso ni una fecha."
-    elif kind == 3:
-        text = (f"En este correo aparecen las reservas {code} y {other}; no sé cuál corresponde "
-                "al viaje afectado. Saldría el viernes 6. El pasaje costó US$ 120. "
-                "Quiero cambio de vuelo o reembolso; todavía no elijo. La demora no está confirmada.")
-        values = [None, None, None, None, None]
-        note = "Dos reservas sin resolver, fecha incompleta, USD sin conversión y acción sin decidir."
-    elif kind == 4:
-        text = (f"Mensaje más reciente del pasajero: corrijo mi correo anterior: la reserva afectada "
-                f"es {code}, vuelo {date}; solicito devolución. Pagué CLP {amount:,} por el pasaje "
-                "(separador de miles: coma); solicito recuperar CLP 64.000. Retraso: 1 hora y 35 minutos.\n"
-                f"--- Mensaje anterior reenviado ---\nReserva {other}, vuelo 2026-10-01. "
-                "Solicito cambio de vuelo. Ese correo quedó corregido por el mensaje más reciente.")
-        values = [code, "refund", amount, date, 95]
-        note = "Corrección explícita sobre mensaje reenviado; extraer monto pagado, no monto solicitado."
-    elif kind == 5:
-        text = (f"Reserva {code}. Vuelo {short_date} (día/mes/año). "
-                "El equipaje llegó dañado. No he decidido qué solución pedir. "
-                "Pasaje: CLP 89.000; impuesto incluido en ese precio: CLP 9.000. "
-                "La demora fue de unos 90 minutos, no tengo la cifra exacta.")
-        values = [code, None, 89000, date, None]
-        note = "Daño no implica devolución; no sumar impuesto incluido; retraso aproximado queda nulo."
-    elif kind == 6:
-        text = (f"{{\"booking\":\"{code}\",\"flight_date\":\"{date}\","
-                f"\"ticket_paid_clp\":{amount},\"delay\":\"90 min\"}}\n"
-                "Nota del pasajero: mantengan el viaje; acepto reprogramar, no solicito reembolso.")
-        values = [code, "rebooking", amount, date, 90]
-        note = "Combinar registro JSON y nota; no interpretar la negación como solicitud de devolución."
-    elif kind == 7:
-        text = (f"Localizador {code}. Mi vuelo sale el próximo viernes; este mensaje no tiene fecha "
-                "de envío. Pagué 89,50 EUR. El vuelo demora 2 horas; no presenta retraso, "
-                "según el aviso: retraso 0 min. Solicito devolución del pasaje.")
-        values = [code, "refund", None, None, 0]
-        note = "Duración del vuelo no es retraso; fecha relativa sin ancla y monto en EUR quedan nulos."
-    elif kind == 8:
-        text = (f"Reserva {code}; salida {6 + batch:02d}.11.2026 (día.mes.año). "
-                "Costo del pasaje: ochenta y nueve mil pesos chilenos. "
-                "Retraso exacto informado: dos horas y media. Pido cambio de vuelo.")
-        values = [code, "rebooking", 89000, date, 150]
-        note = "Normalizar cantidades escritas, formato de fecha y media hora; sin inferir derechos."
-    elif kind == 9:
-        text = (f"Reserva {code}. Vuelo {date}. Pasaje CLP 89.000.\n"
-                "A las 10:00 pedí reembolso. A las 11:00 rectifico: retiro esa solicitud "
-                "y pido únicamente reprogramar el vuelo.\nRetraso confirmado: 45 min.")
-        values = [code, "rebooking", 89000, date, 45]
-        note = "La rectificación explícita resuelve la acción; no conservar dos acciones incompatibles."
-    elif kind == 10:
-        text = (f"Reserva {code}. Posible vuelo 06/11/26 o 11/06/26; no confirmaron el formato "
-                "ni cuál es la fecha correcta. Comprobante ilegible en el campo total. "
-                "Solicitud: devolución. Aviso de retraso: entre 60 y 90 minutos.")
-        values = [code, "refund", None, None, None]
-        note = "Fecha contradictoria, total ilegible e intervalo de retraso no permiten un valor exacto."
-    else:
-        text = (f"Asunto: reserva {code}, vuelo {date}.\nEl importe CLP {amount} de mi primer "
-                "correo estaba equivocado: el comprobante corregido registra CLP 0 de pasaje. "
-                "No decido aún entre cambiar el vuelo y pedir devolución. "
-                "El aviso corregido dice 1 h de retraso; el de 120 min quedó anulado.")
-        values = [code, None, 0, date, 60]
-        note = "Correcciones explícitas de monto y retraso; acción aún sin resolver."
-    return text, dict(zip(FIELDS, values)), note
+Estimados:
+Les escribo por el vuelo PS 412 de Santiago a Puerto Montt del 6 de noviembre de 2026. Según el aviso que recibí en el aeropuerto, el vuelo salió con 2 horas y 40 minutos de retraso y perdí el bus a Puerto Varas.
+Pagué $89.990 pesos por el pasaje y quiero que me devuelvan ese dinero.
+Mi código de reserva es LTR8KD.
 
+Saludos,
+Camila Rojas""",
+     ["LTR8KD", "refund", 89990, "2026-11-06", 160],
+     "Fecha escrita con palabras; 2 horas y 40 minutos son 160 minutos."),
+    ("case-02", """[05/11/2026 21:14] Pasajero: hola, me cancelaron el vuelo de mañana a Punta Arenas
+[05/11/2026 21:14] Pasajero: reserva MNB4QX
+[05/11/2026 21:15] Pasajero: perdón, es MNB4QZ, la otra era de mi hermana
+[05/11/2026 21:16] Agente: Lamento lo ocurrido. ¿Qué solución prefieres?
+[05/11/2026 21:17] Pasajero: que me pasen al primer vuelo que haya, no quiero la plata
+[05/11/2026 21:17] Pasajero: igual el pasaje lo saqué con millas, no pagué nada. la maleta extra sí, $25.000""",
+     ["MNB4QZ", "rebooking", 0, "2026-11-06", None],
+     "Código corregido; «no quiero la plata» no es una devolución; «mañana» se resuelve con la fecha del chat; "
+     "«no pagué nada» es un cero explícito y la maleta no es el pasaje; cancelado sin retraso informado."),
+    ("case-03", """Formulario de contacto · Pacífico Sur
+Nombre: Diego Fuentes
+Código de reserva:
+Motivo: Retraso
+Mensaje: No encuentro el correo con mi código. Mi vuelo a La Serena salía a las 10:15 y llevo como 5 horas esperando en el aeropuerto sin información. ¿Me pueden devolver el dinero o cambiarme a otro vuelo? Lo que sea más rápido.""",
+     [None, None, None, None, None],
+     "Sin código ni fecha; acepta cualquiera de dos soluciones; un tiempo de espera aproximado no es un retraso informado."),
+    ("case-04", """Hola, recibí el aviso de abajo. No me sirve el nuevo horario porque llego tarde a una reunión, así que solicito la devolución completa. Reserva HJ2W7P. Pagué 132.450 CLP ida y vuelta.
+Gracias,
+Tomás
 
-def render(text: str, destination: Path, seed: int) -> None:
-    lines = ["Aerolínea ficticia · Registro sintético", ""]
-    for paragraph in text.splitlines():
-        lines.extend(textwrap.wrap(paragraph, width=77) or [""])
-    height = 100 + 28 * len(lines)
-    nodes = "".join(f'<text x="44" y="{60 + 28*i}">{html.escape(line)}</text>'
-                    for i, line in enumerate(lines))
-    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="{height}">'
-           '<rect width="100%" height="100%" fill="#f1efe9"/>'
-           f'<g fill="#333333" font-family="DejaVu Sans" font-size="22">{nodes}</g></svg>')
-    with tempfile.TemporaryDirectory() as folder:
-        source = Path(folder) / "source.svg"
-        clean = Path(folder) / "clean.png"
-        source.write_text(svg)
-        subprocess.run(["rsvg-convert", str(source), "-o", str(clean)], check=True)
-        subprocess.run(["convert", str(clean), "-colorspace", "Gray", "-seed", str(seed),
-                        "-attenuate", "0.10", "+noise", "Gaussian", "-background", "#eeeeee",
-                        "-rotate", "1.1", str(destination)], check=True)
+---------- Mensaje reenviado ----------
+De: Pacífico Sur <avisos@pacificosur.example>
+Fecha: 04/11/2026
+Asunto: Cambio de itinerario
+
+Su vuelo PS 233 del 07/11/2026 fue reprogramado. Nueva hora de salida: 16:30 (horario original: 13:00).""",
+     ["HJ2W7P", "refund", 132450, "2026-11-07", None],
+     "Reprogramación con horarios: no se calcula un retraso; la fecha del aviso no es la fecha del vuelo."),
+    ("case-05", """Registro de llamada · 06/11/2026 18:02
+Agente: M. Pérez
+Cliente indica código K9TR3L, vuelo PS 610 de hoy Santiago–Antofagasta. Se confirma en sistema un retraso de llegada de 1 h 35 min. La maleta no llegó en el vuelo. Cliente pide reembolso de los $35.000 que pagó por equipaje adicional; aclara que NO pide devolución del pasaje (pagó $118.900). Se deriva a equipajes.""",
+     ["K9TR3L", "refund", 118900, "2026-11-06", 95],
+     "Pide una devolución, aunque sea del equipaje; el monto es el del pasaje, no el reclamado; «hoy» se resuelve con la fecha del registro."),
+    ("case-06", """@PacificoSurAyuda vuelo PS 101 del 6/11 con como 4 horas de atraso y nadie informa nada!!! reserva Z4XP8C. pagué 210 dólares por este pasaje, quiero mi plata de vuelta""",
+     ["Z4XP8C", "refund", None, None, None],
+     "Monto solo en dólares, sin conversión; fecha sin año; retraso aproximado."),
+    ("case-07", None,
+     ["QX7K2M", None, 89000, "2026-11-06", None],
+     "Foto de un comprobante: los montos están alineados a la derecha, medio renglón bajo su etiqueta; "
+     "el pasaje pagado es el total (tarifa más tasas); no hay solicitud ni retraso. El logo dice «Aerolíneela»."),
+    ("case-08", None,
+     ["7HDK4P", "rebooking", None, "2026-11-12", None],
+     "Captura de un chat: «hoy» se resuelve con el separador «jueves, 12 de noviembre de 2026»; "
+     "un retraso estimado no es un retraso informado. El encabezado dice «Pácifico Sur»."),
+    ("case-09", """{"pnr": "T7RM2D", "vuelo": "PS 305", "fecha_vuelo": "2026-11-09", "tarifa_total_clp": 64990, "retraso_min": 50, "estado": "ARRIBADO"}
+Nota del agente: el pasajero pide que lo reprogramen para el vuelo de regreso del día siguiente; no quiere reembolso.""",
+     ["T7RM2D", "rebooking", 64990, "2026-11-09", 50],
+     "Registro del sistema con claves en español y nota libre; la negación del reembolso no es una solicitud."),
+    ("case-10", """Asunto: Re: Solicitud de devolución
+
+Hola de nuevo. En mi correo anterior puse mal el monto: no fueron $98.000, el pasaje me costó $89.000. Todo lo demás sigue igual: reserva PW3N6E, vuelo del 08/11/2026, retraso de 45 minutos según la pantalla. Quedo atenta a la devolución.
+Francisca""",
+     ["PW3N6E", "refund", 89000, "2026-11-08", 45],
+     "La corrección reemplaza el monto anterior; la solicitud está en el asunto y en el cierre."),
+    ("case-11", """Subject: Delayed flight PS 707 – booking 8HJK2L
+
+Hello, my flight from Santiago to Puerto Natales on November 10, 2026 was delayed 1 hour and 15 minutes. I paid CLP 156,000 for the ticket. Could you please refund me?
+Thanks,
+John""",
+     ["8HJK2L", "refund", 156000, "2026-11-10", 75],
+     "Correo en inglés; coma como separador de miles; 1 hora y 15 minutos son 75 minutos."),
+    ("case-12", """Viajamos con mi pareja en el mismo vuelo pero con reservas distintas: AB12CD (la mía) y AB12CE (la de ella). Solo a mí me dejaron abajo por sobreventa. Pido que me cambien al vuelo siguiente, el de las 19:00. Vuelo PS 440 del 14-11-2026. Pagué 76.300 pesos.""",
+     ["AB12CD", "rebooking", 76300, "2026-11-14", None],
+     "Dos reservas, pero el texto indica cuál es la afectada; sobreventa sin retraso informado."),
+    ("case-13", """Buenas tardes. Mi vuelo PS 129 del 03/12/2026 salió puntual (cero minutos de retraso, gracias), pero no me respetaron el asiento que pagué. No busco reembolso del pasaje, que fue de setenta y nueve mil novecientos pesos; solo quiero que me cambien el vuelo de vuelta a uno con asiento en ventana. Reserva QQ8L2V.""",
+     ["QQ8L2V", "rebooking", 79900, "2026-12-03", 0],
+     "Cero explícito de retraso; monto escrito con palabras; la negación del reembolso no es una solicitud."),
+    ("case-14", """Reserva GT5Y1U. Viajé el 11/06 (no recuerdo bien si fue el 11 de junio o el 6 de noviembre, el pasaje lo compré hace tiempo). El vuelo llegó entre una y dos horas tarde. No sé si conviene pedir devolución o un cambio, ¿qué me recomiendan?""",
+     ["GT5Y1U", None, None, None, None],
+     "Fecha ambigua y sin año; retraso en un rango; no decide la solicitud."),
+    ("case-15", None,
+     ["R2LM9X", "refund", 58400, "2026-11-15", 110],
+     "Escaneo de un formulario con casilla marcada; 1 h 50 min son 110 minutos."),
+    ("case-16", None,
+     ["BK5T8N", None, None, "2026-11-20", None],
+     "Foto de una tarjeta de embarque en un celular: solo código y fecha; sin monto, solicitud ni retraso."),
+]
+
+# Errores inventados y declarados para la simulación sin API; no son resultados de un modelo.
+SIMULATED_BASELINE_ERRORS = {
+    "case-03": {"requested_action": "refund"},
+    "case-04": {"delay_minutes": 210},
+    "case-05": {"amount_clp": 35000},
+    "case-06": {"delay_minutes": 240},
+    "case-07": {"amount_clp": 74990},
+    "case-08": {"delay_minutes": 120},
+    "case-12": {"booking_code": None},
+    "case-14": {"requested_action": "refund"},
+}
+
+# Ejemplos de la instrucción con ejemplos: distintos de los casos evaluados.
+PROMPT_EXAMPLES = [
+    {"id": "example-01",
+     "text": "Hola, mi vuelo PS 900 del 21/11/2026 tiene un retraso estimado de unos 90 minutos. Reserva EX4M7A. "
+             "Pagué $64.500 por el pasaje y $15.000 por una maleta extra. Prefiero cambiarme al vuelo siguiente.",
+     "reference": dict(zip(FIELDS, ["EX4M7A", "rebooking", 64500, "2026-11-21", None]))},
+    {"id": "example-02",
+     "text": "Me avisaron que mi vuelo del viernes cambió de las 08:00 a las 11:30. Tengo dos reservas, EX7P2B y EX7P2C, "
+             "y no sé cuál es la de este viaje. Pagué 150 USD. No sé si pedir devolución o cambio.",
+     "reference": dict(zip(FIELDS, [None, None, None, None, None]))},
+]
 
 
 def generate(destination: Path = DEST) -> dict:
     docs = destination / "documents"
     docs.mkdir(parents=True, exist_ok=True)
-    # Estos archivos pertenecen solo al generador; retirar la muestra de posventa.
+    # Retirar los documentos anteriores; las imágenes incluidas se conservan.
     for old in docs.glob("case-*"):
-        old.unlink()
+        if old.name not in IMAGES.values():
+            old.unlink()
     cases = []
-    for index in range(1, 49):
-        text, reference, note = scenario(index)
-        case_id = f"case-{index:02d}"
-        name = f"documents/{case_id}.txt"
-        (destination / name).write_text(text + "\n", encoding="utf-8")
-        cases.append({"id": case_id, "document": name, "reference": reference,
-                      "annotation_note": note, "source_id": case_id})
-    for index in (2, 5):
-        source = cases[index - 1]
-        name = f"documents/case-{index:02d}.png"
-        render(scenario(index)[0], destination / name, seed=index)
-        cases.append({**source, "id": f"case-{index:02d}-image", "document": name,
-                      "paired_with": source["id"],
-                      "annotation_note": source["annotation_note"] + " Imagen con leve giro y ruido; revisar legibilidad."})
-    for index, case in enumerate(cases):
-        correct = {field: {"value": value, "confidence": 0.9, "evidence": None}
-                   for field, value in case["reference"].items()}
+    for case_id, text, values, note in CASES:
+        if text is None:
+            name = f"documents/{IMAGES[case_id]}"
+            if not (destination / name).exists():
+                raise SystemExit(f"Falta la imagen {name}: genérala desde el repositorio docente.")
+        else:
+            name = f"documents/{case_id}.txt"
+            (destination / name).write_text(text + "\n", encoding="utf-8")
+        reference = dict(zip(FIELDS, values))
+        correct = {field: {"value": value, "confidence": 0.9, "evidence": None} for field, value in reference.items()}
         baseline = json.loads(json.dumps(correct))
-        # Errores inventados y declarados, usados solo por las pruebas sin API.
-        if index % 3 == 0:
-            baseline["requested_action"]["value"] = "refund" if case["reference"]["requested_action"] != "refund" else "rebooking"
-        if index % 3 == 1:
-            baseline["amount_clp"]["value"] = None if case["reference"]["amount_clp"] is not None else 0
-        case["prepared_outputs"] = {"baseline": baseline, "few_shot": correct}
+        for field, value in SIMULATED_BASELINE_ERRORS.get(case_id, {}).items():
+            baseline[field]["value"] = value
+        cases.append({"id": case_id, "document": name, "reference": reference, "annotation_note": note,
+                      "source_id": case_id, "prepared_outputs": {"baseline": baseline, "few_shot": correct}})
     dataset = {
-        "name": "aviation-incidents-v1",
+        "name": "aviation-incidents-v2",
         "metadata": {
             "created_on": "2026-10-22", "domain": "Incidencias de pasajeros de una aerolínea ficticia",
-            "source": "Documentos sintéticos propios, sin pasajeros ni reservas reales.",
+            "source": "Textos sintéticos escritos para el curso e imágenes generadas con Seedream 5 Pro; sin pasajeros ni reservas reales.",
             "annotation_status": "Referencia propuesta por el asistente; requiere revisión humana.",
             "prepared_outputs": "Salidas inventadas para simulación; no son resultados de un proveedor.",
-            "limitations": "48 textos de 12 patrones y dos imágenes pareadas: 50 registros, 48 fuentes. No es una muestra representativa ni un conjunto retenido del Hito 1.",
+            "limitations": "16 documentos distintos (12 textos y 4 imágenes). No es una muestra representativa ni un conjunto retenido del Hito 1.",
         },
         "core_ids": CORE_IDS,
-        "prompt_examples": [
-            {"id": "example-01", "text": "Reserva EX1001. Vuelo 2026-12-01. Pasaje CLP 0. Equipaje CLP 15000. Aviso: 1 h 20 min de retraso. No quiero reembolso; pido cambio de vuelo.",
-             "reference": dict(zip(FIELDS, ["EX1001", "rebooking", 0, "2026-12-01", 80]))},
-            {"id": "example-02", "text": "Reservas EX1002 y EX1003, sin señalar cuál es la afectada. Viajo mañana; no hay fecha de envío. Pagué USD 100. Quiero devolución o cambio, aún no decido. Retraso aproximado de una hora.",
-             "reference": dict(zip(FIELDS, [None, None, None, None, None]))},
-        ],
+        "prompt_examples": PROMPT_EXAMPLES,
         "cases": cases,
     }
     (destination / "cases.json").write_text(json.dumps(dataset, ensure_ascii=False, indent=2) + "\n")

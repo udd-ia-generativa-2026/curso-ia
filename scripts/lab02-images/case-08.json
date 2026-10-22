@@ -1,0 +1,11 @@
+{
+  "model": "bytedance-seed/seedream-5-0-pro",
+  "prompt": "Realistic screenshot of a smartphone messaging app conversation in Spanish between a passenger and the customer support of a fictional airline called \"Pacífico Sur\". Clean generic chat interface, no real app logos, light theme, portrait. A centered date separator at the top reads exactly \"jueves, 12 de noviembre de 2026\". Then these chat bubbles in this order, exact text, crisp and legible:\n(left, support) \"Hola, soy Valentina de Pacífico Sur. ¿En qué te puedo ayudar?\"\n(right, passenger) \"Hola, tengo la reserva 7HDK4P para el vuelo PS 520 de hoy a Calama\"\n(right, passenger) \"Me acaba de llegar un aviso: retraso estimado de 2 horas\"\n(right, passenger) \"Prefiero cambiarme al vuelo de la tarde, ¿se puede?\"\n(left, support) \"Déjame revisar la disponibilidad, un momento por favor.\"\nEach bubble has a small time stamp between 09:12 and 09:15. No other text besides the contact name \"Pacífico Sur\" at the top. No watermark.",
+  "aspect": "9:16",
+  "options": {
+    "resolution": "2K"
+  },
+  "created_at": "2026-10-22T15:42:50+00:00",
+  "cost_usd": 0.045,
+  "provider": "OpenRouter"
+}

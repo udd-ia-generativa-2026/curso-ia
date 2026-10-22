@@ -1,2 +1,0 @@
-{"booking":"AX0043","flight_date":"2026-11-09","ticket_paid_clp":92000,"delay":"90 min"}
-Nota del pasajero: mantengan el viaje; acepto reprogramar, no solicito reembolso.

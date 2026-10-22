@@ -16,7 +16,7 @@ def build(destination: Path) -> None:
     archive_path = destination / "curso-ia-lab02.zip"
     paths = [ROOT / "pyproject.toml", ROOT / "README.md"]
     paths += [path for path in sorted((ROOT / "src/curso_ia").rglob("*"))
-              if path.is_file() and path.suffix in {".py", ".toml", ".json", ".txt", ".png"}]
+              if path.is_file() and path.suffix in {".py", ".toml", ".json", ".txt", ".png", ".jpg"}]
     with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in paths:
             archive.write(path, "curso-ia/" + str(path.relative_to(ROOT)))

@@ -1,1 +1,2 @@
-Reserva AX0009; salida 06.11.2026 (día.mes.año). Costo del pasaje: ochenta y nueve mil pesos chilenos. Retraso exacto informado: dos horas y media. Pido cambio de vuelo.
+{"pnr": "T7RM2D", "vuelo": "PS 305", "fecha_vuelo": "2026-11-09", "tarifa_total_clp": 64990, "retraso_min": 50, "estado": "ARRIBADO"}
+Nota del agente: el pasajero pide que lo reprogramen para el vuelo de regreso del día siguiente; no quiere reembolso.

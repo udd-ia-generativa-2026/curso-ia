@@ -34,7 +34,7 @@ class FakeServer(BaseHTTPRequestHandler):
             return
         function_name = body["tools"][0]["function"]["name"]
         args = {name: {"value": value, "confidence": 0.9, "evidence": None}
-                for name, value in {"booking_code": "AX0001", "requested_action": "refund", "amount_clp": 89000, "flight_date": "2026-11-06", "delay_minutes": 0}.items()}
+                for name, value in {"booking_code": "LTR8KD", "requested_action": "refund", "amount_clp": 89990, "flight_date": "2026-11-06", "delay_minutes": 160}.items()}
         self.send(200, {
             "id": "local-test", "object": "chat.completion", "created": 0, "model": body["model"],
             "choices": [{"index": 0, "finish_reason": "tool_calls", "message": {
@@ -89,7 +89,7 @@ def execute(extra_env: dict) -> dict:
             assert "lab02/evidence/experiment.json" in names
             for case in saved["cases"]:
                 assert "lab02/" + case["document"] in names
-        assert (destination / "labs/lab02/documents/case-02.png").read_bytes().startswith(b"\x89PNG")
+        assert (destination / "labs/lab02/documents/case-07.jpg").read_bytes().startswith(b"\xff\xd8\xff")
         assert saved["reference_reviewed"] is False
         assert all(not value for value in saved["decisions"].values())
         # Recalcular la celda didáctica en un proceso nuevo: no necesita una API.
@@ -143,10 +143,10 @@ if __name__ == "__main__":
     assert all(isinstance(row["latency_ms"], int) for row in local["results"])
     # Las versiones se alternan por documento para no cargar a una sola la lentitud pasajera.
     assert [row["variant"] for row in local["results"][:4]] == ["baseline", "few_shot"] * 2
-    assert any("data:image/png;base64," in json.dumps(request) for request in REQUESTS)
+    assert any("data:image/jpeg;base64," in json.dumps(request) for request in REQUESTS)
     assert "prepared_outputs" not in json.dumps(REQUESTS)
     assert "annotation_note" not in json.dumps(REQUESTS)
-    assert "AX0006" not in " ".join(
+    assert "Z4XP8C" not in " ".join(
         str(message.get("content", "")) for message in REQUESTS[1]["messages"]
     ), "No se envían las referencias de otros casos."
     print("HTTP local falso: imagen enviada, salida tipada, error conservado, sin claves ni referencias de evaluación en la entrada.")

@@ -14,13 +14,13 @@ from curso_ia import (
 
 def test_installed_resources_and_document_formats(tmp_path):
     dataset = load_json(lab_resource(2, "cases.json"))
-    assert len(dataset["cases"]) == 50
+    assert len(dataset["cases"]) == 16
     assert len(dataset["core_ids"]) == 8
     for case in dataset["cases"]:
         content = document_input(lab_resource(2, case["document"]))
-        if case["document"].endswith(".png"):
+        if case["document"].endswith(".jpg"):
             assert isinstance(content, BinaryContent)
-            assert content.media_type == "image/png" and content.data.startswith(b"\x89PNG")
+            assert content.media_type == "image/jpeg" and content.data.startswith(b"\xff\xd8\xff")
         else:
             assert isinstance(content, str) and content.strip()
     pdf = tmp_path / "source.pdf"
@@ -78,7 +78,7 @@ async def test_google_binary_input_and_typed_output_without_provider_calls():
         received.append(body)
         parts = body["contents"][0]["parts"]
         binary = next(part["inlineData"] for part in parts if "inlineData" in part)
-        assert binary.get("mimeType", binary.get("mime_type")) == "image/png" and binary["data"]
+        assert binary.get("mimeType", binary.get("mime_type")) == "image/jpeg" and binary["data"]
         tool = body["tools"][0]
         declarations = tool.get("functionDeclarations", tool.get("function_declarations"))
         tool_name = declarations[0]["name"]
@@ -93,7 +93,7 @@ async def test_google_binary_input_and_typed_output_without_provider_calls():
         model = GoogleModel("modelo-ficticio", provider=GoogleProvider(
             api_key="clave-ficticia", http_client=http,
             retry_options=HttpRetryOptions(attempts=1)))
-        image = document_input(lab_resource(2, "documents/case-02.png"))
+        image = document_input(lab_resource(2, "documents/case-07.jpg"))
         result = await Agent(model, output_type=Result).run(["Extrae el monto de la imagen.", image])
     assert len(received) == 1 and result.output.amount == 0
 
@@ -126,8 +126,8 @@ async def test_timed_run_records_output_or_error(tmp_path):
     assert row["status"] == "error" and row["output"] is None and "error_type" in row
 
 
-def test_aviation_annotations_match_the_schema_and_keep_format_pairs():
-    # Validar las 50 anotaciones contra el esquema que realmente verá el estudiante.
+def test_aviation_annotations_match_the_schema():
+    # Validar las 16 anotaciones contra el esquema que realmente verá el estudiante.
     notebook = json.loads((Path(__file__).parents[1] / "notebooks/lab02.ipynb").read_text())
     schema = next("".join(cell["source"]) for cell in notebook["cells"]
                   if "class Extraction(" in "".join(cell["source"]))
@@ -138,7 +138,10 @@ def test_aviation_annotations_match_the_schema_and_keep_format_pairs():
     extraction = namespace["Extraction"]
     dataset = load_dataset(2)
     cases = {case["id"]: case for case in dataset["cases"]}
-    assert len(cases) == 50 and set(dataset["core_ids"]) <= set(cases)
+    assert len(cases) == 16 and set(dataset["core_ids"]) <= set(cases)
+    # Todos los documentos son distintos: ya no hay patrones repetidos ni pares de formato.
+    sources = [case["path"].read_bytes() for case in cases.values()]
+    assert len(set(sources)) == len(sources)
     assert not set(cases) & {example["id"] for example in dataset["prompt_examples"]}
     for case in cases.values():
         expected = case["reference"]
@@ -148,11 +151,10 @@ def test_aviation_annotations_match_the_schema_and_keep_format_pairs():
         assert {field: data["value"] for field, data in case["prepared_outputs"]["few_shot"].items()} == expected
         if expected["flight_date"] is not None:
             assert date.fromisoformat(expected["flight_date"]).isoformat() == expected["flight_date"]
-        if "paired_with" in case:
-            assert expected == cases[case["paired_with"]]["reference"]
-            assert case["source_id"] == case["paired_with"]
+    assert sum(case["document"].endswith(".jpg") for case in cases.values()) == 4
+    assert cases["case-02"]["reference"]["booking_code"] == "MNB4QZ"
     assert cases["case-02"]["reference"]["amount_clp"] == 0
-    assert cases["case-02"]["reference"]["delay_minutes"] == 185
-    assert cases["case-04"]["reference"] == {field: None for field in extraction.model_fields}
-    assert cases["case-05"]["reference"]["booking_code"] == "AX0005"
-    assert cases["case-06"]["reference"]["delay_minutes"] is None
+    assert cases["case-03"]["reference"] == {field: None for field in extraction.model_fields}
+    assert cases["case-04"]["reference"]["delay_minutes"] is None
+    assert cases["case-05"]["reference"]["amount_clp"] == 118900
+    assert cases["case-13"]["reference"]["delay_minutes"] == 0

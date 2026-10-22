@@ -1,3 +1,3 @@
-Mensaje más reciente del pasajero: corrijo mi correo anterior: la reserva afectada es AX0005, vuelo 2026-11-06; solicito devolución. Pagué CLP 89,000 por el pasaje (separador de miles: coma); solicito recuperar CLP 64.000. Retraso: 1 hora y 35 minutos.
---- Mensaje anterior reenviado ---
-Reserva BZ0005, vuelo 2026-10-01. Solicito cambio de vuelo. Ese correo quedó corregido por el mensaje más reciente.
+Registro de llamada · 06/11/2026 18:02
+Agente: M. Pérez
+Cliente indica código K9TR3L, vuelo PS 610 de hoy Santiago–Antofagasta. Se confirma en sistema un retraso de llegada de 1 h 35 min. La maleta no llegó en el vuelo. Cliente pide reembolso de los $35.000 que pagó por equipaje adicional; aclara que NO pide devolución del pasaje (pagó $118.900). Se deriva a equipajes.

@@ -1,0 +1,11 @@
+{
+  "model": "bytedance-seed/seedream-5-0-pro",
+  "prompt": "Realistic photo of a smartphone held in one hand at an airport gate, the screen showing a mobile boarding pass of a fictional airline \"Aerolínea del Pacífico Sur\", blurred gate seats in the background. The boarding pass must show exactly these texts in Spanish, crisp and legible:\nTARJETA DE EMBARQUE\nPasajero: P. SOTO\nVuelo: PS 118\nSantiago (SCL) → Antofagasta (ANF)\nFecha: 20 NOV 2026\nEmbarque: 06:10 · Puerta 14 · Asiento 17C\nCódigo de reserva: BK5T8N\nand a generic QR code. No other text. No real airline logos. Photorealistic, no watermark.",
+  "aspect": "3:4",
+  "options": {
+    "resolution": "2K"
+  },
+  "created_at": "2026-10-22T15:42:28+00:00",
+  "cost_usd": 0.09,
+  "provider": "OpenRouter"
+}

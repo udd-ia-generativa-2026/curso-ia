@@ -1,0 +1,11 @@
+{
+  "model": "bytedance-seed/seedream-5-0-pro",
+  "prompt": "Realistic flatbed scan of a printed airline complaint form on white paper, slightly skewed, faint scanner shadow at the edges. Fictional airline \"Aerolínea del Pacífico Sur\". The form is filled in with typed text. It must show exactly these lines in Spanish, crisp and legible:\nFORMULARIO DE RECLAMO\nCódigo de reserva: R2LM9X\nVuelo: PS 233 · Concepción (CCP) → Santiago (SCL)\nFecha del vuelo: 15/11/2026\nRetraso informado por la aerolínea: 1 h 50 min\nImporte pagado por el pasaje: CLP 58.400\nSolicitud: [X] Devolución   [ ] Cambio de vuelo\nFirma del pasajero: ____________\nNo other text. Photorealistic scan, no watermark.",
+  "aspect": "3:4",
+  "options": {
+    "resolution": "2K"
+  },
+  "created_at": "2026-10-22T15:44:41+00:00",
+  "cost_usd": 0.09,
+  "provider": "OpenRouter"
+}

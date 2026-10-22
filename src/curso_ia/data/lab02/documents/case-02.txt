@@ -1,2 +1,6 @@
-RESERVA AX0002 | Fecha de vuelo 06/11/2026 (día/mes/año).
-Billete de premio: importe efectivamente pagado por el pasaje CLP 0. Equipaje adicional: CLP 12.990. Retraso informado: 3 h 05 min. No quiero otra fecha; devuélvanme lo pagado por el pasaje.
+[05/11/2026 21:14] Pasajero: hola, me cancelaron el vuelo de mañana a Punta Arenas
+[05/11/2026 21:14] Pasajero: reserva MNB4QX
+[05/11/2026 21:15] Pasajero: perdón, es MNB4QZ, la otra era de mi hermana
+[05/11/2026 21:16] Agente: Lamento lo ocurrido. ¿Qué solución prefieres?
+[05/11/2026 21:17] Pasajero: que me pasen al primer vuelo que haya, no quiero la plata
+[05/11/2026 21:17] Pasajero: igual el pasaje lo saqué con millas, no pagué nada. la maleta extra sí, $25.000

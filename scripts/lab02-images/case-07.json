@@ -1,0 +1,11 @@
+{
+  "model": "bytedance-seed/seedream-5-0-pro",
+  "prompt": "Realistic smartphone photo, slightly angled from above, of a printed airline purchase receipt lying on a wooden cafe table, soft daylight, a coffee cup partly visible at the edge, the paper slightly curled. The receipt is from a fictional airline named \"Aerolínea del Pacífico Sur\" with a small stylized wave logo, and must show exactly these lines in Spanish, crisp and legible, in this order:\nCOMPROBANTE DE COMPRA\nReserva: QX7K2M\nPasajero: C. MUÑOZ\nVuelo PS 412 · Santiago (SCL) → Puerto Montt (PMC)\nFecha de vuelo: 06/11/2026 · Salida 07:45\nTarifa: CLP 74.990\nTasas e impuestos: CLP 14.010\nTOTAL PAGADO: CLP 89.000\nEquipaje adicional: no incluido\nNo other text. Photorealistic, no watermark.",
+  "aspect": "3:4",
+  "options": {
+    "resolution": "2K"
+  },
+  "created_at": "2026-10-22T15:42:26+00:00",
+  "cost_usd": 0.09,
+  "provider": "OpenRouter"
+}
