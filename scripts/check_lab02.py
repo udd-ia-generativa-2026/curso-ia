@@ -2,8 +2,9 @@
 """Comprobar el notebook completo sin claves ni proveedores externos.
 
 Recorre una simulación tipada y un servidor HTTP local falso que acepta imágenes
-y devuelve argumentos tipados. Un error deliberado comprueba que el denominador
-no descarta las consultas fallidas. No mide un proveedor real.
+y devuelve argumentos tipados. Un error deliberado de la consulta (400) comprueba que el
+denominador no descarta las consultas fallidas; un fallo del servicio (503) comprueba que se
+reintenta una vez. No mide un proveedor real.
 """
 
 from __future__ import annotations
@@ -31,6 +32,9 @@ class FakeServer(BaseHTTPRequestHandler):
         REQUESTS.append(body)
         if len(REQUESTS) == 1:
             self.send(400, {"error": {"message": f"Fallo deliberado {KEY}", "type": "invalid_request_error"}})
+            return
+        if len(REQUESTS) == 3:
+            self.send(503, {"error": {"message": "Servicio no disponible", "type": "server_error"}})
             return
         function_name = body["tools"][0]["function"]["name"]
         args = {name: {"value": value, "confidence": 0.9, "evidence": None}
@@ -65,6 +69,8 @@ def execute(extra_env: dict) -> dict:
         for cell in notebook.cells:
             if cell.cell_type == "code" and 'MODE = "simulated"' in cell.source:
                 cell.source = cell.source.replace('MODE = "simulated"', 'MODE = ' + repr(extra_env["CURSO_MODE"]))
+            if cell.cell_type == "code" and "RETRY_WAIT_S = 20" in cell.source:
+                cell.source = cell.source.replace("RETRY_WAIT_S = 20", "RETRY_WAIT_S = 0")
         env = {name: value for name, value in os.environ.items()
                if not name.upper().endswith(("_API_KEY", "_TOKEN", "_SECRET"))}
         env.update(extra_env)
@@ -137,8 +143,12 @@ if __name__ == "__main__":
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
-    assert len(REQUESTS) == 16
+    # 16 consultas y un reintento: el 503 se reintenta y responde; el 400 no se reintenta y queda como fallo.
+    assert len(REQUESTS) == 17
     assert local["checked_failed"] == {"baseline": 5, "few_shot": 0}
+    first, retried = local["results"][0], local["results"][2]
+    assert (first["status"], first["attempts"], first["http_status"]) == ("error", 1, 400)
+    assert (retried["case_id"], retried["status"], retried["attempts"]) == ("case-02", "ok", 2)
     assert all(row["input_tokens"] == 20 for row in local["results"] if row["status"] == "ok")
     assert all(isinstance(row["latency_ms"], int) for row in local["results"])
     # Las versiones se alternan por documento para no cargar a una sola la lentitud pasajera.
@@ -149,4 +159,4 @@ if __name__ == "__main__":
     assert "Z4XP8C" not in " ".join(
         str(message.get("content", "")) for message in REQUESTS[1]["messages"]
     ), "No se envían las referencias de otros casos."
-    print("HTTP local falso: imagen enviada, salida tipada, error conservado, sin claves ni referencias de evaluación en la entrada.")
+    print("HTTP local falso: imagen enviada, salida tipada, error conservado, 503 reintentado, sin claves ni referencias de evaluación en la entrada.")
