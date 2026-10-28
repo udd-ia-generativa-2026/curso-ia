@@ -615,7 +615,7 @@ nvtx = [
 
 [[package]]
 name = "curso-ia"
-version = "0.4.1"
+version = "0.4.2"
 source = { editable = "." }
 dependencies = [
     { name = "pandas" },
