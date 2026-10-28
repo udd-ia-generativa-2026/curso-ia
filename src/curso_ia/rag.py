@@ -151,17 +151,25 @@ class CourseEmbedding(BaseEmbedding):
         prov, name = provider(self._ref), model_name(self._ref)
         if prov == "google":
             from google import genai
+            from google.genai import types
 
             client = genai.Client(api_key=self._config.key("google"))
-            response = client.models.embed_content(model=name, contents=texts)
-            return [embedding.values for embedding in response.embeddings]
-        if prov in OPENAI_COMPATIBLE:
+            # Con gemini-embedding-2, una lista de textos se une en un solo contenido y da un solo vector:
+            # cada texto va como contenido propio (Colab, 28/10/2026).
+            contents = [types.Content(parts=[types.Part(text=text)]) for text in texts]
+            response = client.models.embed_content(model=name, contents=contents)
+            vectors = [embedding.values for embedding in response.embeddings]
+        elif prov in OPENAI_COMPATIBLE:
             from openai import OpenAI
 
             client = OpenAI(base_url=OPENAI_COMPATIBLE[prov], api_key=self._config.key(prov), max_retries=0)
             response = client.embeddings.create(model=name, input=texts)
-            return [item.embedding for item in response.data]
-        raise ConfigError(f"El proveedor {prov!r} no ofrece embeddings en el curso; usa google: u openrouter:.")
+            vectors = [item.embedding for item in response.data]
+        else:
+            raise ConfigError(f"El proveedor {prov!r} no ofrece embeddings en el curso; usa google: u openrouter:.")
+        if len(vectors) != len(texts):
+            raise RuntimeError(f"El proveedor devolvió {len(vectors)} vectores para {len(texts)} textos.")
+        return vectors
 
     def _get_text_embedding(self, text: str) -> list[float]:
         return self._get_text_embeddings([text])[0]

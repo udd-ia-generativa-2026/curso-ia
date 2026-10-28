@@ -59,3 +59,28 @@ def test_other_embedding_model_ignores_precomputed_vectors():
     assert same_model("openrouter:google/gemini-embedding-2", "gemini-embedding-2")
     embedding = CourseEmbedding("google:gemini-embedding-001", load_config(env={"CURSO_MODE": "simulated"}))
     assert embedding.precomputed == 0
+
+
+@lab03
+def test_gemini_embeddings_send_one_content_per_text(monkeypatch):
+    """gemini-embedding-2 une una lista de textos en un solo vector si no van como contenidos separados."""
+    from types import SimpleNamespace
+
+    from google import genai
+
+    from curso_ia import load_config
+    from curso_ia.rag import CourseEmbedding
+
+    sent = []
+
+    class FakeModels:
+        def embed_content(self, model, contents):
+            sent.append(contents)
+            return SimpleNamespace(embeddings=[SimpleNamespace(values=[1.0, float(i)]) for i, _ in enumerate(contents)])
+
+    monkeypatch.setattr(genai, "Client", lambda api_key: SimpleNamespace(models=FakeModels()))
+    config = load_config(env={"CURSO_MODE": "real", "GOOGLE_API_KEY": "clave-de-prueba"})
+    embedding = CourseEmbedding("google:gemini-embedding-2", config, precomputed=False)
+    vectors = embedding.get_text_embedding_batch(["uno", "dos", "tres"])
+    assert len(sent[0]) == 3 and all(len(content.parts) == 1 for content in sent[0])
+    assert len(vectors) == 3 and embedding.requests == 3
