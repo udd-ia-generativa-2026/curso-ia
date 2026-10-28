@@ -1,4 +1,9 @@
+import pytest
+
 from curso_ia import lab_resource, load_json
+
+# Las pruebas del módulo rag necesitan el extra lab03 (uv sync --extra lab03).
+lab03 = pytest.mark.skipif(not __import__("importlib").util.find_spec("llama_index"), reason="falta el extra lab03")
 
 
 def test_lab03_corpus_and_questions_are_consistent():
@@ -14,3 +19,43 @@ def test_lab03_corpus_and_questions_are_consistent():
         assert q["answerable"] == bool(q["expected_evidence"])
         for evidence in q["expected_evidence"]:
             assert evidence["quote"] in texts[evidence["doc_id"]], q["id"]
+
+
+@lab03
+def test_precomputed_embeddings_cover_the_notebook_chunks():
+    """Los vectores del paquete cubren las preguntas y los fragmentos que corta el notebook."""
+    from llama_index.core.node_parser import SentenceSplitter
+
+    from curso_ia import load_config
+    from curso_ia.rag import CourseEmbedding, load_corpus
+
+    config = load_config(env={"CURSO_MODE": "real"})
+    embedding = CourseEmbedding("google:gemini-embedding-2", config)
+    documents, questions = load_corpus()
+    texts = [q["question"] for q in questions]
+    for size in (200, 400, 800):
+        nodes = SentenceSplitter(chunk_size=size, chunk_overlap=size // 10).get_nodes_from_documents(documents)
+        texts += [node.get_content() for node in nodes]
+    vectors = embedding.get_text_embedding_batch(texts)
+    assert embedding.requests == 0 and len(vectors) == len(texts)
+    assert all(abs(sum(x * x for x in v) - 1) < 1e-3 for v in vectors[:5])
+
+
+@lab03
+def test_new_text_without_key_names_the_missing_secret():
+    from curso_ia import ConfigError, load_config
+    from curso_ia.rag import CourseEmbedding
+
+    embedding = CourseEmbedding("google:gemini-embedding-2", load_config(env={"CURSO_MODE": "real"}))
+    with pytest.raises(ConfigError, match="GOOGLE_API_KEY"):
+        embedding.get_query_embedding("Una pregunta que no está en el paquete")
+
+
+@lab03
+def test_other_embedding_model_ignores_precomputed_vectors():
+    from curso_ia import load_config
+    from curso_ia.rag import CourseEmbedding, same_model
+
+    assert same_model("openrouter:google/gemini-embedding-2", "gemini-embedding-2")
+    embedding = CourseEmbedding("google:gemini-embedding-001", load_config(env={"CURSO_MODE": "simulated"}))
+    assert embedding.precomputed == 0

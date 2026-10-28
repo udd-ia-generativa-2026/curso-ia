@@ -17,7 +17,7 @@ from typing import Mapping
 CONFIG_FILE = "config.toml"
 MODES = ("real", "simulated")
 # Un rol puede cambiarse sin editar el archivo: COMPARISON_MODEL=google:gemini-...
-ROLE_VARIABLE = {"generation": "GENERATION_MODEL", "comparison": "COMPARISON_MODEL"}
+ROLE_VARIABLE = {"generation": "GENERATION_MODEL", "comparison": "COMPARISON_MODEL", "embedding": "EMBEDDING_MODEL"}
 # Proveedores con clave conocida; el resto los resuelve PydanticAI con su variable estándar.
 PROVIDER_KEY = {
     "curso": "CURSO_API_KEY",
@@ -27,6 +27,7 @@ PROVIDER_KEY = {
     "anthropic": "ANTHROPIC_API_KEY",
     "groq": "GROQ_API_KEY",
     "mistral": "MISTRAL_API_KEY",
+    "openrouter": "OPENROUTER_API_KEY",
 }
 SECRET_SUFFIXES = ("_API_KEY", "_TOKEN", "_SECRET")
 # En Colab se leen de los secretos del notebook con estos mismos nombres.

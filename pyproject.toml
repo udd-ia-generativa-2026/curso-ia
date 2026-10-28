@@ -1,6 +1,6 @@
 [project]
 name = "curso-ia"
-version = "0.2.0"
+version = "0.3.0"
 description = "Código común del curso Aplicaciones de IA Generativa"
 readme = "README.md"
 requires-python = ">=3.11,<3.15"
@@ -11,8 +11,19 @@ dependencies = [
   "tqdm>=4.66,<5",
 ]
 
+[project.optional-dependencies]
+# Laboratorio 3: índice, recuperación y juez de contraste. El rerank usa sentence-transformers, que Colab ya trae;
+# gte-multilingual-reranker-base trae código propio que no funciona con transformers 5 (prueba del 28/10/2026).
+lab03 = [
+  "transformers>=4.50,<5",
+  "llama-index-core>=0.14,<0.15",
+  "llama-index-vector-stores-qdrant>=0.8,<1",
+  "qdrant-client>=1.12,<2",
+  "deepeval>=3,<4",
+]
+
 [dependency-groups]
-dev = ["pytest>=8,<10", "pytest-asyncio>=1,<2", "nbformat>=5,<6", "nbclient>=0.10,<1", "ipykernel>=6,<8"]
+dev = ["pytest>=8,<10", "pytest-asyncio>=1,<2", "nbformat>=5,<6", "nbclient>=0.10,<1", "ipykernel>=6,<8", "sentence-transformers>=3,<6"]
 
 [build-system]
 requires = ["hatchling"]

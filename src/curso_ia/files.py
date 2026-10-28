@@ -63,11 +63,11 @@ def document_input(path: Path | Traversable) -> str | BinaryContent:
     raise ValueError("Formato no admitido: usa texto, Markdown, CSV, JSON, PNG, JPEG, WebP o PDF.")
 
 
-def save_experiment(path: Path, payload: dict, config: Config) -> Path:
-    """Guardar ambas versiones juntas, sin secretos y sin certificar revisión humana."""
+def save_experiment(path: Path, payload: dict, config: Config, *, lab: int = 2) -> Path:
+    """Guardar el experimento en un JSON, sin secretos y sin certificar revisión humana."""
     document = {
         **payload,
-        "lab": 2,
+        "lab": lab,
         "saved_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "mode": config.mode,
         "simulated": config.mode == "simulated",
