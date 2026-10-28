@@ -1,0 +1,58 @@
+[
+  {
+    "doc_id": "pol-equipaje",
+    "title": "Política de equipaje",
+    "status": "vigente",
+    "valid_from": "2026-03-01",
+    "valid_to": null,
+    "file": "pol-equipaje.md"
+  },
+  {
+    "doc_id": "pol-cambios",
+    "title": "Política de cambios de vuelo",
+    "status": "vigente",
+    "valid_from": "2026-03-01",
+    "valid_to": null,
+    "file": "pol-cambios.md"
+  },
+  {
+    "doc_id": "pol-devoluciones-2026",
+    "title": "Política de devoluciones",
+    "status": "vigente",
+    "valid_from": "2026-07-01",
+    "valid_to": null,
+    "file": "pol-devoluciones-2026.md"
+  },
+  {
+    "doc_id": "pol-devoluciones-2024",
+    "title": "Política de devoluciones (derogada)",
+    "status": "derogada",
+    "valid_from": "2024-05-01",
+    "valid_to": "2026-06-30",
+    "file": "pol-devoluciones-2024.md"
+  },
+  {
+    "doc_id": "pol-retrasos",
+    "title": "Política de retrasos y cancelaciones",
+    "status": "vigente",
+    "valid_from": "2026-03-01",
+    "valid_to": null,
+    "file": "pol-retrasos.md"
+  },
+  {
+    "doc_id": "pol-asistencia",
+    "title": "Política de asistencia especial",
+    "status": "vigente",
+    "valid_from": "2026-03-01",
+    "valid_to": null,
+    "file": "pol-asistencia.md"
+  },
+  {
+    "doc_id": "pol-embarque",
+    "title": "Política de check-in y embarque",
+    "status": "vigente",
+    "valid_from": "2026-03-01",
+    "valid_to": null,
+    "file": "pol-embarque.md"
+  }
+]

@@ -1,0 +1,379 @@
+[
+  {
+    "id": "q01",
+    "question": "Viajo en Light. ¿Puedo subir al avión con mi maleta chica de rueditas?",
+    "expected_answer": "Solo un artículo personal de hasta 3 kg que quepa bajo el asiento; la maleta de mano se agrega antes del vuelo en «Mis viajes» por CLP 12.000 por tramo, o se cobra CLP 35.000 si se detecta en la puerta.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-equipaje",
+        "quote": "La tarifa Light incluye solo el artículo personal."
+      },
+      {
+        "doc_id": "pol-equipaje",
+        "quote": "de hasta 3 kg y que quepa bajo el asiento delantero"
+      },
+      {
+        "doc_id": "pol-equipaje",
+        "quote": "debe agregarla antes del vuelo en «Mis viajes» por CLP 12.000 por tramo"
+      },
+      {
+        "doc_id": "pol-equipaje",
+        "quote": "se cobra CLP 35.000 por tramo y se envía a la bodega"
+      }
+    ],
+    "answerable": true,
+    "category": "un documento",
+    "in_generation_subset": false
+  },
+  {
+    "id": "q02",
+    "question": "Mi valija no aparece hace tres semanas. ¿Ya la consideran extraviada?",
+    "expected_answer": "Cuando no se ubica dentro de 21 días corridos desde la fecha del vuelo.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-equipaje",
+        "quote": "Una maleta demorada se considera perdida si no se ubica dentro de 21 días corridos desde la fecha del vuelo."
+      }
+    ],
+    "answerable": true,
+    "category": "un documento",
+    "in_generation_subset": true
+  },
+  {
+    "id": "q03",
+    "question": "Se me olvidó pagar la valija grande y ya estoy en el mesón. ¿Cuánto me van a cobrar?",
+    "expected_answer": "CLP 40.000 por tramo; en «Mis viajes», hasta 4 horas antes, cuesta CLP 22.000.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-equipaje",
+        "quote": "CLP 40.000 por tramo si se compra en el aeropuerto"
+      }
+    ],
+    "answerable": true,
+    "category": "un documento",
+    "in_generation_subset": false
+  },
+  {
+    "id": "q04",
+    "question": "Me entregaron la valija con una rueda quebrada y me di cuenta en la casa. ¿Todavía puedo reclamar?",
+    "expected_answer": "Hasta 7 días corridos desde la entrega de la maleta, con fotos del daño y la etiqueta de equipaje.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-equipaje",
+        "quote": "a más tardar, dentro de 7 días corridos desde la entrega de la maleta"
+      }
+    ],
+    "answerable": true,
+    "category": "un documento",
+    "in_generation_subset": false
+  },
+  {
+    "id": "q05",
+    "question": "Con mi pasaje Light necesito viajar una semana más tarde. ¿Qué me cobran?",
+    "expected_answer": "Un cambio de fecha por tramo, con un cargo de CLP 25.000 más la diferencia tarifaria, hecho hasta 3 horas antes de la salida del vuelo original.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-cambios",
+        "quote": "Los pasajes Light admiten un cambio de fecha u hora por tramo, con un cargo de CLP 25.000 más la diferencia tarifaria."
+      },
+      {
+        "doc_id": "pol-cambios",
+        "quote": "Todos los cambios deben hacerse hasta 3 horas antes de la salida del vuelo original"
+      }
+    ],
+    "answerable": true,
+    "category": "un documento",
+    "in_generation_subset": false
+  },
+  {
+    "id": "q06",
+    "question": "Terminé antes la reunión y quiero irme en el vuelo de las 15 en vez del de las 20. Tengo Plus. ¿Cuánto pago?",
+    "expected_answer": "CLP 10.000, sin diferencia tarifaria, según disponibilidad y en la misma ruta.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-cambios",
+        "quote": "El cambio el mismo día cuesta CLP 10.000 en Plus y no tiene costo en Full, sin cobrar diferencia tarifaria."
+      }
+    ],
+    "answerable": true,
+    "category": "distractor",
+    "in_generation_subset": false
+  },
+  {
+    "id": "q07",
+    "question": "Mi pareja no puede viajar. ¿Puedo poner su pasaje a nombre de mi hermano?",
+    "expected_answer": "No, los pasajes no se transfieren; solo se corrige sin costo un error de hasta tres letras en el nombre.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-cambios",
+        "quote": "No se permite transferir un pasaje a otra persona."
+      }
+    ],
+    "answerable": true,
+    "category": "un documento",
+    "in_generation_subset": false
+  },
+  {
+    "id": "q08",
+    "question": "¿Puedo viajar con mi gato en la cabina?",
+    "expected_answer": "sin evidencia",
+    "expected_evidence": [],
+    "answerable": false,
+    "category": "sin respuesta",
+    "in_generation_subset": true
+  },
+  {
+    "id": "q09",
+    "question": "Compré el pasaje en marzo y no lo usé. ¿Todavía alcanzo a pedir que me devuelvan la plata?",
+    "expected_answer": "Hasta un año después de la fecha de emisión del pasaje; pasado ese plazo solo se devuelven las tasas de embarque e impuestos.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-devoluciones-2026",
+        "quote": "Puede solicitar la devolución hasta un año después de la fecha de emisión del pasaje."
+      },
+      {
+        "doc_id": "pol-devoluciones-2026",
+        "quote": "Pasado ese plazo, solo se devuelven las tasas de embarque e impuestos."
+      }
+    ],
+    "answerable": true,
+    "category": "versión",
+    "in_generation_subset": true
+  },
+  {
+    "id": "q10",
+    "question": "Saqué la tarifa más barata, la Light, y al final no voy. ¿Recupero algo?",
+    "expected_answer": "La tarifa no, pero sí las tasas de embarque e impuestos, que se devuelven siempre.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-devoluciones-2026",
+        "quote": "Los pasajes Light no tienen devolución de la tarifa."
+      },
+      {
+        "doc_id": "pol-devoluciones-2026",
+        "quote": "Las tasas de embarque e impuestos se devuelven siempre, en todas las tarifas"
+      }
+    ],
+    "answerable": true,
+    "category": "versión",
+    "in_generation_subset": true
+  },
+  {
+    "id": "q11",
+    "question": "Esta mañana compré en la app un vuelo para el próximo mes y me arrepentí. ¿Me cobran algo por anularlo?",
+    "expected_answer": "Sí, si el vuelo sale al menos 7 días después de la compra: el retracto dentro de 24 horas da devolución completa sin cargo, incluso en Light.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-devoluciones-2026",
+        "quote": "dentro de 24 horas desde la compra, con devolución completa y sin cargo, siempre que el vuelo salga al menos 7 días después de la compra"
+      }
+    ],
+    "answerable": true,
+    "category": "versión",
+    "in_generation_subset": false
+  },
+  {
+    "id": "q12",
+    "question": "Llevo tres horas esperando en la puerta y el avión no sale. ¿Me tienen que dar algo para comer?",
+    "expected_answer": "Un vale de alimentación de CLP 10.000, porque el retraso es de 2 horas o más.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-retrasos",
+        "quote": "Si el retraso respecto de la hora de salida programada es de 2 horas o más, Pacífico Sur entrega un vale de alimentación de CLP 10.000 por pasajero"
+      }
+    ],
+    "answerable": true,
+    "category": "un documento",
+    "in_generation_subset": false
+  },
+  {
+    "id": "q13",
+    "question": "La aerolínea suspendió mi vuelo de mañana. ¿Qué puedo hacer?",
+    "expected_answer": "Viajar en el siguiente vuelo disponible sin costo, cambiar a otra fecha dentro de 30 días sin cargo, o pedir la devolución completa con tasas. Si se avisó con menos de 7 días y la causa es de la aerolínea, además recibe CLP 40.000 en saldo a favor por tramo.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-retrasos",
+        "quote": "viajar en el siguiente vuelo con asientos disponibles a su destino, sin costo; cambiar a otra fecha dentro de los 30 días siguientes, sin cargo ni diferencia tarifaria; o pedir la devolución completa del pasaje, incluidas las tasas, cualquiera sea la tarifa"
+      },
+      {
+        "doc_id": "pol-retrasos",
+        "quote": "recibe una compensación de CLP 40.000 en saldo a favor por cada tramo cancelado"
+      }
+    ],
+    "answerable": true,
+    "category": "un documento",
+    "in_generation_subset": true
+  },
+  {
+    "id": "q14",
+    "question": "Por el atraso tengo que dormir en Punta Arenas y no vivo ahí. ¿Quién paga la noche?",
+    "expected_answer": "Pacífico Sur cubre el hotel y el traslado; si no hay hoteles, reembolsa hasta CLP 90.000 por noche con boleta, reclamando en «Mis viajes» dentro de 30 días.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-retrasos",
+        "quote": "Pacífico Sur cubre el hotel y el traslado entre el aeropuerto y el hotel"
+      },
+      {
+        "doc_id": "pol-retrasos",
+        "quote": "se reembolsa el alojamiento contratado por el pasajero hasta CLP 90.000 por noche"
+      },
+      {
+        "doc_id": "pol-retrasos",
+        "quote": "Los reclamos por retrasos y cancelaciones se presentan en «Mis viajes» dentro de los 30 días siguientes a la fecha del vuelo"
+      }
+    ],
+    "answerable": true,
+    "category": "un documento",
+    "in_generation_subset": false
+  },
+  {
+    "id": "q15",
+    "question": "¿Puedo ver series conectado a internet durante el vuelo?",
+    "expected_answer": "sin evidencia",
+    "expected_evidence": [],
+    "answerable": false,
+    "category": "sin respuesta",
+    "in_generation_subset": true
+  },
+  {
+    "id": "q16",
+    "question": "¿Puede mi hija de 10 años viajar sola de Santiago a Calama?",
+    "expected_answer": "Sí, con el servicio de menor no acompañado: CLP 35.000 por tramo, contratado al menos 72 horas antes y solo en vuelos directos nacionales; el check-in debe hacerse en el aeropuerto.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-asistencia",
+        "quote": "Los menores de entre 5 y 13 años que viajen sin un acompañante mayor de 18 años deben usar el servicio de menor no acompañado, que tiene un costo de CLP 35.000 por tramo."
+      },
+      {
+        "doc_id": "pol-asistencia",
+        "quote": "debe contratarse al menos 72 horas antes del vuelo y solo está disponible en vuelos directos nacionales"
+      },
+      {
+        "doc_id": "pol-embarque",
+        "quote": "El check-in en el aeropuerto es obligatorio para quienes facturan equipaje, viajan con un servicio de asistencia especial o con un menor no acompañado."
+      }
+    ],
+    "answerable": true,
+    "category": "un documento",
+    "in_generation_subset": false
+  },
+  {
+    "id": "q17",
+    "question": "Mi vuelo se retrasó 5 horas y ya no quiero viajar. ¿Me devuelven todo y en cuánto tiempo?",
+    "expected_answer": "Sí, la devolución completa con tasas y sin cargo, en cualquier tarifa; una vez aprobada se paga en 10 días hábiles.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-retrasos",
+        "quote": "Si el retraso es de 4 horas o más, el pasajero puede desistir del viaje y pedir la devolución completa del pasaje, incluidas las tasas, sin cargo y cualquiera sea la tarifa."
+      },
+      {
+        "doc_id": "pol-devoluciones-2026",
+        "quote": "Una vez aprobada la solicitud, la devolución se paga en un plazo de 10 días hábiles."
+      }
+    ],
+    "answerable": true,
+    "category": "dos documentos",
+    "in_generation_subset": true
+  },
+  {
+    "id": "q18",
+    "question": "A mi papá le cuesta caminar distancias largas. ¿Qué tengo que hacer para que lo lleven en silla en el aeropuerto?",
+    "expected_answer": "Al menos 48 horas antes de la salida; con menos anticipación se atiende según disponibilidad. No tiene costo.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-asistencia",
+        "quote": "La asistencia debe solicitarse al menos 48 horas antes de la salida del vuelo"
+      }
+    ],
+    "answerable": true,
+    "category": "un documento",
+    "in_generation_subset": false
+  },
+  {
+    "id": "q19",
+    "question": "Tengo 32 semanas de embarazo. ¿Me dejan volar?",
+    "expected_answer": "Sí, con un certificado médico emitido dentro de los 7 días anteriores al vuelo; desde la semana 36 no se permite volar.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-asistencia",
+        "quote": "Entre las semanas 29 y 35 deben presentar un certificado médico, emitido dentro de los 7 días anteriores al vuelo"
+      }
+    ],
+    "answerable": true,
+    "category": "un documento",
+    "in_generation_subset": true
+  },
+  {
+    "id": "q20",
+    "question": "Si llego corriendo a la puerta 15 minutos antes de mi vuelo a Antofagasta, ¿me dejan subir?",
+    "expected_answer": "No: en vuelos nacionales el embarque cierra 20 minutos antes de la salida.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-embarque",
+        "quote": "El embarque cierra 20 minutos antes de la salida en vuelos nacionales"
+      }
+    ],
+    "answerable": true,
+    "category": "distractor",
+    "in_generation_subset": false
+  },
+  {
+    "id": "q21",
+    "question": "¿Puedo canjear mis millas para pasarme a Premium?",
+    "expected_answer": "sin evidencia",
+    "expected_evidence": [],
+    "answerable": false,
+    "category": "sin respuesta",
+    "in_generation_subset": true
+  },
+  {
+    "id": "q22",
+    "question": "No alcancé a tomar el vuelo de ida. ¿Pierdo también la vuelta?",
+    "expected_answer": "Sí: si no se presenta a la ida, se cancelan los tramos siguientes. Para conservar la vuelta hay que avisar en «Mis viajes» o en el centro de contacto antes de la salida de la ida.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-embarque",
+        "quote": "Si no se presenta al vuelo de ida, Pacífico Sur cancela automáticamente los tramos siguientes de la misma reserva, incluido el vuelo de vuelta."
+      },
+      {
+        "doc_id": "pol-embarque",
+        "quote": "Para conservar el vuelo de vuelta, avise en «Mis viajes» o en el centro de contacto antes de la salida del vuelo de ida que no lo utilizará."
+      }
+    ],
+    "answerable": true,
+    "category": "un documento",
+    "in_generation_subset": false
+  },
+  {
+    "id": "q23",
+    "question": "Viajo a Lima el jueves. ¿Desde cuándo y hasta cuándo puedo sacar la tarjeta de embarque por internet?",
+    "expected_answer": "Desde 48 horas antes de la salida hasta 3 horas antes.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-embarque",
+        "quote": "se abre 48 horas antes de la salida del vuelo y cierra 2 horas antes en vuelos nacionales y 3 horas antes en vuelos internacionales"
+      }
+    ],
+    "answerable": true,
+    "category": "distractor",
+    "in_generation_subset": false
+  },
+  {
+    "id": "q24",
+    "question": "Ya me aprobaron la devolución. ¿En cuánto tiempo me pagan?",
+    "expected_answer": "En un plazo de 10 días hábiles desde la aprobación, al mismo medio de pago de la compra.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-devoluciones-2026",
+        "quote": "Una vez aprobada la solicitud, la devolución se paga en un plazo de 10 días hábiles."
+      },
+      {
+        "doc_id": "pol-devoluciones-2026",
+        "quote": "El pago se hace al mismo medio de pago usado en la compra"
+      }
+    ],
+    "answerable": true,
+    "category": "versión",
+    "in_generation_subset": true
+  }
+]
