@@ -87,10 +87,13 @@ async def run_case(
     return row
 
 
-async def timed_run(agent: Agent, prompt: list, *, ref: str, config: Config, request_limit: int = 2) -> dict:
+async def timed_run(
+    agent: Agent, prompt: list | str, *, ref: str, config: Config, request_limit: int = 2, deps=None,
+) -> dict:
     """Ejecutar una extracción y registrar salida, tokens, costo y latencia; un fallo queda como fila con `error`.
 
-    `request_limit=2` permite que PydanticAI reintente una vez si la salida no cumple el esquema.
+    `request_limit=2` permite que PydanticAI reintente una vez si la salida no cumple el esquema o un validador.
+    `deps` llega a los validadores de salida del agente (por ejemplo, los fragmentos que recibió el modelo).
     En modo simulado no se registra latencia: no mide a ningún proveedor.
     """
     row = {"model": ref, "mode": config.mode,
@@ -99,7 +102,7 @@ async def timed_run(agent: Agent, prompt: list, *, ref: str, config: Config, req
     start = perf_counter()
     try:
         result = await asyncio.wait_for(
-            agent.run(prompt, usage_limits=UsageLimits(request_limit=request_limit)), TIMEOUT_S)
+            agent.run(prompt, deps=deps, usage_limits=UsageLimits(request_limit=request_limit)), TIMEOUT_S)
         row.update(status="ok", output=result.output.model_dump(mode="json"))
         if config.mode == "real":
             usage = result.usage

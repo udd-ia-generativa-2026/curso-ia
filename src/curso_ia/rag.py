@@ -1,12 +1,12 @@
-"""Piezas del laboratorio 3 que no enseñan RAG: embeddings con espera y caché, y el juez de DeepEval.
+"""Piezas del laboratorio 3 que no enseñan RAG: carga del corpus y embeddings con espera y caché.
 
-Fragmentar, indexar, recuperar, medir, responder con citas y reordenar quedan a la vista en el notebook.
+Fragmentar, indexar, recuperar, medir, responder con citas, validar citas y reordenar quedan a la vista
+en el notebook.
 Este módulo necesita el extra `lab03` (`curso-ia[lab03]`); por eso no se importa desde `curso_ia`.
 """
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import time
 from collections import deque
@@ -191,41 +191,3 @@ def save_precomputed(path, embedding: CourseEmbedding, texts: list[str]) -> int:
     vectors = np.stack([embedding._cache[key] for key in keys]).astype(np.float32)
     np.savez_compressed(path, keys=np.array(keys), vectors=vectors, model=model_name(embedding._ref).split("/")[-1])
     return len(keys)
-
-
-def judge_model(ref: str, config: Config, *, per_minute: int | None = None, settings: dict | None = None):
-    """Un modelo del curso como juez de DeepEval, con salida tipada de PydanticAI y espera entre consultas."""
-    from deepeval.models import DeepEvalBaseLLM
-    from pydantic_ai import Agent
-
-    from .models import create_model
-
-    class CourseJudge(DeepEvalBaseLLM):
-        def __init__(self):
-            self.ref, self.requests, self.input_tokens, self.output_tokens = ref, 0, 0, 0
-            self._lock, self._last = asyncio.Lock(), 0.0
-            super().__init__(ref)
-
-        def load_model(self):
-            return create_model(ref, config)
-
-        async def a_generate(self, prompt: str, schema=None):
-            async with self._lock:
-                if per_minute:
-                    await asyncio.sleep(max(0.0, self._last + 60 / per_minute - time.monotonic()))
-                self._last = time.monotonic()
-            agent = Agent(self.model, output_type=schema or str, model_settings=settings or {}, retries=2)
-            result = await agent.run(prompt)
-            usage = result.usage
-            self.requests += usage.requests
-            self.input_tokens += usage.input_tokens
-            self.output_tokens += usage.output_tokens
-            return result.output
-
-        def generate(self, prompt: str, schema=None):
-            return asyncio.run(self.a_generate(prompt, schema))
-
-        def get_model_name(self):
-            return ref
-
-    return CourseJudge()
