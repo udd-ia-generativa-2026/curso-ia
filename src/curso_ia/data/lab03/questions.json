@@ -375,5 +375,41 @@
     "answerable": true,
     "category": "versión",
     "in_generation_subset": true
+  },
+  {
+    "id": "q25",
+    "question": "Ayer compré por la app un pasaje Light para un vuelo que sale en 3 días. Me arrepentí, ¿me devuelven todo?",
+    "expected_answer": "No: el retracto exige que el vuelo salga al menos 7 días después de la compra. Con Light no se devuelve la tarifa; sí las tasas de embarque e impuestos.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-devoluciones-2026",
+        "quote": "siempre que el vuelo salga al menos 7 días después de la compra"
+      },
+      {
+        "doc_id": "pol-devoluciones-2026",
+        "quote": "Los pasajes Light no tienen devolución de la tarifa."
+      },
+      {
+        "doc_id": "pol-devoluciones-2026",
+        "quote": "Las tasas de embarque e impuestos se devuelven siempre"
+      }
+    ],
+    "answerable": true,
+    "category": "condición",
+    "in_generation_subset": true
+  },
+  {
+    "id": "q26",
+    "question": "Mi vuelo lleva 3 horas de atraso y ya no quiero viajar. ¿Me devuelven todo el pasaje?",
+    "expected_answer": "No por el retraso: la devolución completa por desistir exige un retraso de 4 horas o más.",
+    "expected_evidence": [
+      {
+        "doc_id": "pol-retrasos",
+        "quote": "Si el retraso es de 4 horas o más, el pasajero puede desistir del viaje y pedir la devolución completa del pasaje"
+      }
+    ],
+    "answerable": true,
+    "category": "condición",
+    "in_generation_subset": true
   }
 ]

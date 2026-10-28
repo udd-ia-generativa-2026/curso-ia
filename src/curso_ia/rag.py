@@ -8,6 +8,7 @@ Este módulo necesita el extra `lab03` (`curso-ia[lab03]`); por eso no se import
 from __future__ import annotations
 
 import hashlib
+import re
 import time
 from collections import deque
 
@@ -45,6 +46,27 @@ def load_corpus() -> tuple[list, list[dict]]:
             excluded_llm_metadata_keys=list(metadata),
         ))
     return documents, load_json(lab_resource(3, "questions.json"))
+
+
+SENTENCE_END = re.compile(r"(?<=[.;?!])\s+(?=[A-ZÁÉÍÓÚÑ«¿¡])")
+
+
+def sentences(documents) -> list[dict]:
+    """Oraciones literales de cada política, con un identificador `doc_id:n` para citarlas como evidencia.
+
+    Se omiten los títulos. Cada oración es un trozo exacto del texto, así que sirve como frase esperada.
+    """
+    rows = []
+    for document in documents:
+        doc_id, number = document.metadata["doc_id"], 0
+        for paragraph in document.text.split("\n"):
+            paragraph = paragraph.strip()
+            if not paragraph or paragraph.startswith("#"):
+                continue
+            for sentence in SENTENCE_END.split(paragraph):
+                number += 1
+                rows.append({"id": f"{doc_id}:{number}", "doc_id": doc_id, "sentence": sentence})
+    return rows
 
 
 def text_key(text: str) -> str:

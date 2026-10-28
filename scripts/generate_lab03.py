@@ -459,11 +459,23 @@ QUESTIONS = [
      [("pol-devoluciones-2026", "Una vez aprobada la solicitud, la devolución se paga en un plazo de 10 días hábiles."),
       ("pol-devoluciones-2026", "El pago se hace al mismo medio de pago usado en la compra")],
      "versión"),
+    # Agregadas el 28/10/2026: la evidencia llega, pero hay que comprobar una condición numérica que no se cumple.
+    # Gemini 3.5 Flash Lite respondió «sí» en 4 de 4 ejecuciones de cada una, con citas literales correctas.
+    ("q25", "Ayer compré por la app un pasaje Light para un vuelo que sale en 3 días. Me arrepentí, ¿me devuelven todo?",
+     "No: el retracto exige que el vuelo salga al menos 7 días después de la compra. Con Light no se devuelve la tarifa; sí las tasas de embarque e impuestos.",
+     [("pol-devoluciones-2026", "siempre que el vuelo salga al menos 7 días después de la compra"),
+      ("pol-devoluciones-2026", "Los pasajes Light no tienen devolución de la tarifa."),
+      ("pol-devoluciones-2026", "Las tasas de embarque e impuestos se devuelven siempre")],
+     "condición"),
+    ("q26", "Mi vuelo lleva 3 horas de atraso y ya no quiero viajar. ¿Me devuelven todo el pasaje?",
+     "No por el retraso: la devolución completa por desistir exige un retraso de 4 horas o más.",
+     [("pol-retrasos", "Si el retraso es de 4 horas o más, el pasajero puede desistir del viaje y pedir la devolución completa del pasaje")],
+     "condición"),
 ]
 
-# Subconjunto de 10 preguntas para generar en clase y para los jueces: las tres sin respuesta,
-# las dos de la demostración (q17 y q24) y una de cada tipo restante.
-GENERATION_SUBSET = ["q02", "q08", "q09", "q10", "q13", "q15", "q17", "q19", "q21", "q24"]
+# Subconjunto de 12 preguntas para generar en clase: las tres sin respuesta,
+# las dos de la demostración (q17 y q24), una de cada tipo restante y las dos de condición (q25 y q26).
+GENERATION_SUBSET = ["q02", "q08", "q09", "q10", "q13", "q15", "q17", "q19", "q21", "q24", "q25", "q26"]
 
 
 def main() -> None:
