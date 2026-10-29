@@ -1,8 +1,8 @@
 """Figura de tamaño de fragmento y solapamiento para la sección 3 del laboratorio 3.
 
 Usa el corte real de pol-equipaje con fragmentos de 200 tokens: #02 y #03 comparten una oración.
-Se incluye en el paquete y el notebook la muestra con show_document; para regenerarla:
-uv run --with matplotlib python scripts/build_lab03_chunking_figure.py src/curso_ia/data/lab03/chunking.png
+El notebook la enlaza con la URL raw de GitHub; para regenerarla:
+uv run --with matplotlib python scripts/build_lab03_chunking_figure.py notebooks/img/lab03-chunking.png
 """
 
 import sys
