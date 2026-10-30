@@ -10,6 +10,8 @@ Laboratorio 2: [![Abrir en Colab](https://colab.research.google.com/assets/colab
 
 Laboratorio 3: [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/lab03/notebooks/lab03.ipynb)
 
+Hito 1, línea base (apoyo opcional): [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/hito1/notebooks/hito1.ipynb)
+
 La primera celda de cada notebook instala el paquete:
 
 ```
@@ -51,3 +53,7 @@ Los embeddings usan `gemini-embedding-2` (rol `embedding`, variable `EMBEDDING_M
 El rerank usa `gte-multilingual-reranker-base`, cuyo código propio no funciona con transformers 5: el extra fija `transformers<5` (prueba del 28/10/2026).
 
 Comprobaciones: `uv sync --extra lab03` y `uv run pytest`; el notebook corre completo en modo simulado sin claves. `python scripts/build_lab03_review.py` prepara en `dist/lab03-review/` el notebook y un ZIP del paquete para el ensayo en Colab, como en el laboratorio 2. Con uv, NLTK rechaza los archivos instalados con enlaces duros: usar `UV_LINK_MODE=copy`.
+
+## Hito 1 · Línea base, apoyo opcional
+
+`notebooks/hito1.ipynb` lee el `cases.jsonl` y el corpus de un equipo, ejecuta una línea base simple (instrucción sin ejemplos para la extracción y todo el corpus en la instrucción para las respuestas con fuentes), la compara con dos líneas base triviales sin modelo y guarda en `eval/baseline/` las salidas y las métricas, que vuelve a calcular desde los archivos sin llamar al modelo. Sin archivos propios usa un ejemplo con los datos de los laboratorios 2 y 3. Solo necesita las dependencias base del paquete. No es obligatorio: cada equipo puede adaptarlo o usar otro código.
