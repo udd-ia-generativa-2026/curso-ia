@@ -6,6 +6,10 @@ Paquete del curso: configuración de modelos por rol, casos de prueba, medición
 
 Laboratorio 1: [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/lab01/notebooks/lab01.ipynb)
 
+Laboratorio 2: [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/lab02/notebooks/lab02.ipynb)
+
+Laboratorio 3: [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/lab03/notebooks/lab03.ipynb)
+
 La primera celda de cada notebook instala el paquete:
 
 ```
@@ -26,7 +30,7 @@ Convención: los identificadores (funciones, clases, variables, campos de TOML y
 
 ## Laboratorio 2 · Incidencias de pasajeros en Colab
 
-Acuerdo del 22/10/2026: todos los laboratorios se trabajan en Colab. El notebook `notebooks/lab02.ipynb` incluye instalación, secretos, extracción y descarga; abrirlo no requiere cuenta de GitHub. Deja visibles el esquema, las instrucciones, `Agent` y las métricas. El paquete aporta configuración, lectura, medición y guardado. La etiqueta pública `lab02` y su enlace de Colab siguen pendientes de revisión y publicación; no usar ese enlace antes de publicar la etiqueta.
+Acuerdo del 22/10/2026: todos los laboratorios se trabajan en Colab. El notebook `notebooks/lab02.ipynb` incluye instalación, secretos, extracción y descarga; abrirlo no requiere cuenta de GitHub. Deja visibles el esquema, las instrucciones, `Agent` y las métricas. El paquete aporta configuración, lectura, medición y guardado. Publicado en la etiqueta `lab02` el 22/10/2026.
 
 La muestra sintética de una aerolínea ficticia contiene 16 documentos distintos: 12 textos (correos, chats, formularios, notas de llamadas y registros del sistema) y cuatro imágenes realistas. El recorrido inicial usa ocho documentos, seis textos y dos imágenes, y dos versiones de la instrucción: 16 consultas; la muestra completa, 32. Extrae `booking_code`, `requested_action`, `amount_clp`, `flight_date` y `delay_minutes`, cada uno con valor, confianza declarada y evidencia. Las anotaciones siguen la política de la sección 2 del notebook y requieren revisión humana; las salidas preparadas son solo simulación. No es una muestra representativa ni un conjunto retenido del Hito 1.
 
@@ -40,9 +44,9 @@ Antes de publicar, `python scripts/build_lab02_review.py` prepara en `dist/lab02
 
 ## Laboratorio 3 · Respuestas con fuentes en Colab
 
-El notebook `notebooks/lab03.ipynb` construye un índice de Qdrant en memoria con LlamaIndex sobre siete políticas sintéticas de Pacífico Sur (una derogada), mide el recuperador con recall@k, tasa de aciertos y MRR sobre frases literales esperadas, responde 10 preguntas en tres modos (sin documentos, con todo el corpus y con recuperación) con salida tipada y citas, aplica el rerank como un único cambio y contrasta con Faithfulness y Contextual Recall de DeepEval, sin nota. Deja visibles el fraccionamiento, el índice, el filtro de vigencia, las métricas, el esquema, la instrucción, `Agent`, el rerank y los jueces; `curso_ia.rag` aporta la carga del corpus, los embeddings con espera y caché y el adaptador del juez. Necesita el extra `lab03`; la etiqueta pública `lab03` sigue pendiente de revisión y publicación.
+El notebook `notebooks/lab03.ipynb` construye un índice de Qdrant en memoria con LlamaIndex sobre siete políticas sintéticas de Pacífico Sur (una derogada) y mide el recuperador con recall@k, tasa de aciertos y MRR sobre frases literales esperadas en 26 preguntas, más tres preguntas propias de cada equipo. Responde 12 de ellas en tres modos (sin documentos, con todo el corpus y con recuperación) con salida tipada y citas, corrige el generador con un solo cambio (instrucción, validador de citas o filtro de vigencia) y mide si un *reranker* mejora el recuperador antes de agregarlo. Deja visibles el fraccionamiento, el índice, el filtro de vigencia, las métricas, el esquema, la instrucción, `Agent`, el validador y el rerank; `curso_ia.rag` aporta la carga del corpus, las oraciones con identificador para las preguntas propias y los embeddings con espera y caché. Necesita el extra `lab03`. Publicado en la etiqueta `lab03` el 30/10/2026.
 
-Los embeddings usan `gemini-embedding-2` (rol `embedding`, variable `EMBEDDING_MODEL`). El paquete trae en `data/lab03/embeddings.npz` los vectores de las 24 preguntas y de los fragmentos de 200, 400 y 800 tokens, para no gastar en clase la cuota gratuita de 100 textos por minuto; solo los textos nuevos consultan al proveedor. `uv run --extra lab03 python scripts/build_lab03_embeddings.py` los regenera; `openrouter:google/gemini-embedding-2` sirve como el mismo modelo.
+Los embeddings usan `gemini-embedding-2` (rol `embedding`, variable `EMBEDDING_MODEL`). El paquete trae en `data/lab03/embeddings.npz` los vectores de las 26 preguntas y de los fragmentos de 200, 400 y 800 tokens, para no gastar en clase la cuota gratuita de 100 textos por minuto; solo los textos nuevos consultan al proveedor. `uv run --extra lab03 python scripts/build_lab03_embeddings.py` los regenera; `openrouter:google/gemini-embedding-2` sirve como el mismo modelo.
 
 El rerank usa `gte-multilingual-reranker-base`, cuyo código propio no funciona con transformers 5: el extra fija `transformers<5` (prueba del 28/10/2026).
 
