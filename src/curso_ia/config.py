@@ -17,7 +17,10 @@ from typing import Mapping
 CONFIG_FILE = "config.toml"
 MODES = ("real", "simulated")
 # Un rol puede cambiarse sin editar el archivo: COMPARISON_MODEL=google:gemini-...
-ROLE_VARIABLE = {"generation": "GENERATION_MODEL", "comparison": "COMPARISON_MODEL", "embedding": "EMBEDDING_MODEL"}
+ROLE_VARIABLE = {
+    "generation": "GENERATION_MODEL", "comparison": "COMPARISON_MODEL", "embedding": "EMBEDDING_MODEL",
+    "decision": "DECISION_MODEL",
+}
 # Proveedores con clave conocida; el resto los resuelve PydanticAI con su variable estándar.
 PROVIDER_KEY = {
     "curso": "CURSO_API_KEY",
@@ -151,6 +154,9 @@ def missing(ref: str, config: Config) -> list[str]:
         lacking.append("modelo con la forma proveedor:modelo")
     if prov == "curso" and not config.course_base_url:
         lacking.append("CURSO_BASE_URL")
+    # d1:curso usa el servidor del curso con su clave; d1:colab, un llama-server de la propia sesión, sin clave.
+    if ref.strip() == "d1:curso":
+        lacking += [name for name, ok in (("CURSO_BASE_URL", config.course_base_url), ("CURSO_API_KEY", config.key("curso"))) if not ok]
     if prov in PROVIDER_KEY and not config.key(prov):
         lacking.append(PROVIDER_KEY[prov])
     return lacking

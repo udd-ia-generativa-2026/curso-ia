@@ -26,6 +26,10 @@ def create_model(ref: str, config: Config, *, simulated_output: dict | None = No
     if lacking := missing(ref, config):
         raise ConfigError(f"Falta configurar: {', '.join(lacking)}.")
     prov, name = provider(ref), model_name(ref)
+    if prov == "d1":
+        from .decision import d1_model
+
+        return d1_model(name, config)
     if prov == "curso":
         from openai import AsyncOpenAI
         from pydantic_ai.models.openai import OpenAIChatModel

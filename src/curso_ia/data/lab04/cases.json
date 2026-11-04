@@ -1,0 +1,747 @@
+{
+  "name": "aviation-routes-v1",
+  "metadata": {
+    "created_on": "2026-11-04",
+    "domain": "Reclamos y consultas de pasajeros de Pacífico Sur, aerolínea ficticia",
+    "source": "Textos sintéticos escritos para el curso; sin pasajeros ni reservas reales.",
+    "annotation_status": "Etiquetas propuestas por el asistente según las reglas; requieren revisión docente.",
+    "limitations": "80 mensajes breves, 77 en español y 3 en inglés. No es una muestra representativa: las proporciones de rutas y la cantidad de casos difíciles son de diseño."
+  },
+  "labels": {
+    "special_assistance": "Asistencia especial: necesidad de ayuda para viajar por salud, movilidad, embarazo, menor que viaja solo o perro de asistencia, antes del vuelo o porque no se prestó.",
+    "baggage": "Equipaje: maleta o artículo demorado, perdido, dañado u olvidado, reglas y cobros de equipaje.",
+    "rebooking": "Reprogramación: pide volar en otro vuelo, fecha, hora o ruta, por decisión propia o por un retraso, cancelación o conexión perdida.",
+    "refund": "Devolución: pide dinero o saldo a favor (pasaje, tasas, cargos, gastos o compensación) y no pide volar.",
+    "other": "Otra: check-in, documentos, asientos, datos de la reserva, servicio a bordo, información o reclamos sin una solicitud de las rutas anteriores."
+  },
+  "rules": [
+    "1. Si menciona una necesidad de asistencia especial que afecta el viaje o que no se prestó, es special_assistance, aunque también pida un cambio o dinero.",
+    "2. Si el problema principal es una maleta, un artículo o un cobro de equipaje, es baggage, aunque pida dinero.",
+    "3. Si pide volar en otro vuelo, fecha, hora o ruta, es rebooking, aunque mencione la devolución como alternativa que prefiere menos.",
+    "4. Si pide dinero o saldo a favor y no pide volar, es refund.",
+    "5. En el resto es other, incluidas las preguntas sobre derechos o montos sin una solicitud y los reclamos que solo piden una explicación.",
+    "Las reglas se aplican en orden: gana la primera que se cumple. Una negación no es una solicitud."
+  ],
+  "cases": [
+    {
+      "id": "r01",
+      "text": "Necesito pasar mi vuelo de la noche al de la mañana, mismo día, tengo Light. Sé que quizás no se pueda.",
+      "route": "rebooking",
+      "difficulty": "hard",
+      "rule": 3,
+      "note": "Light no admite el cambio el mismo día, pero la ruta depende de lo que pide, no de si corresponde.",
+      "split": "tune"
+    },
+    {
+      "id": "r02",
+      "text": "No quiero otro vuelo. Quiero mi plata.",
+      "route": "refund",
+      "difficulty": "clear",
+      "rule": 4,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r03",
+      "text": "Quiero cambiar mi asiento a pasillo para el vuelo del jueves.",
+      "route": "other",
+      "difficulty": "hard",
+      "rule": 5,
+      "note": "Cambia el asiento, no el vuelo: no es una reprogramación.",
+      "split": "test"
+    },
+    {
+      "id": "r04",
+      "text": "Mi maleta no llegó a Punta Arenas en el vuelo PS1291. Ya hice la denuncia en el mesón. ¿Cuándo me la entregan?",
+      "route": "baggage",
+      "difficulty": "clear",
+      "rule": 2,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r05",
+      "text": "Compré el pasaje con millas y cancelaron el vuelo. Quiero que me devuelvan las millas y las tasas.",
+      "route": "refund",
+      "difficulty": "clear",
+      "rule": 4,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r06",
+      "text": "No pude hacer el check-in en la app, me sale error. Mi vuelo es en 4 horas.",
+      "route": "other",
+      "difficulty": "clear",
+      "rule": 5,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r07",
+      "text": "I'm traveling with my service dog next week. Do I need to inform anything in advance?",
+      "route": "special_assistance",
+      "difficulty": "clear",
+      "rule": 1,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r08",
+      "text": "Necesito la factura del pasaje a nombre de mi empresa.",
+      "route": "other",
+      "difficulty": "clear",
+      "rule": 5,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r09",
+      "text": "Mi papá tiene Alzheimer y no puede comer solo. ¿Puede la tripulación ayudarlo durante el vuelo?",
+      "route": "special_assistance",
+      "difficulty": "clear",
+      "rule": 1,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r10",
+      "text": "Me cobraron sobrepeso de CLP 30.000 en el mesón y creo que la balanza estaba mal. Quiero que me devuelvan el cobro.",
+      "route": "baggage",
+      "difficulty": "hard",
+      "rule": 2,
+      "note": "Pide devolver un cobro de equipaje: la regla 2 gana a la 4.",
+      "split": "test"
+    },
+    {
+      "id": "r11",
+      "text": "Hola, quiero saber si el vuelo de mañana a Iquique viene con atraso.",
+      "route": "other",
+      "difficulty": "clear",
+      "rule": 5,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r12",
+      "text": "El vuelo se canceló y mi hija de 10 años, que viajaba como menor no acompañado, quedó en el aeropuerto. ¿Qué pasa con ella?",
+      "route": "special_assistance",
+      "difficulty": "hard",
+      "rule": 1,
+      "note": "Hay una cancelación, pero la regla 1 gana: un menor no acompañado está afectado.",
+      "split": "test"
+    },
+    {
+      "id": "r13",
+      "text": "El taxi del aeropuerto al hotel lo pagué yo (CLP 22.000) porque no había traslado. Adjunto boleta para reembolso.",
+      "route": "refund",
+      "difficulty": "clear",
+      "rule": 4,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r14",
+      "text": "¿Es posible agregar una maleta a mi reserva después de comprar?",
+      "route": "baggage",
+      "difficulty": "clear",
+      "rule": 2,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r15",
+      "text": "I was charged for a seat I never got because the aircraft was changed. I want that charge refunded.",
+      "route": "refund",
+      "difficulty": "clear",
+      "rule": 4,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r16",
+      "text": "Tengo movilidad reducida y mi vuelo sale en 20 horas. ¿Todavía puedo pedir asistencia?",
+      "route": "special_assistance",
+      "difficulty": "clear",
+      "rule": 1,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r17",
+      "text": "Me devolvieron en saldo a favor pero yo pedí devolución a la tarjeta. Quiero el dinero, no saldo.",
+      "route": "refund",
+      "difficulty": "clear",
+      "rule": 4,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r18",
+      "text": "Compré ayer un pasaje por error con fecha equivocada y lo quiero anular con devolución. Reserva PSD4N1.",
+      "route": "refund",
+      "difficulty": "clear",
+      "rule": 4,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r19",
+      "text": "El vuelo de conexión era en otra reserva que compré aparte y lo perdí por el retraso de ustedes. Necesito llegar a Iquique hoy.",
+      "route": "rebooking",
+      "difficulty": "hard",
+      "rule": 3,
+      "note": "Pide volar; que la conexión no esté protegida decide el costo, no la ruta.",
+      "split": "test"
+    },
+    {
+      "id": "r20",
+      "text": "Cancelaron mi vuelo a La Serena por el cierre del aeropuerto. No quiero que me devuelvan nada, solo necesito viajar mañana.",
+      "route": "rebooking",
+      "difficulty": "hard",
+      "rule": 3,
+      "note": "Menciona la devolución, pero la niega: una negación no es una solicitud.",
+      "split": "test"
+    },
+    {
+      "id": "r21",
+      "text": "Llevo 3 días sin mi equipaje y tuve que comprar ropa. Quiero que me reembolsen CLP 85.000 en compras.",
+      "route": "baggage",
+      "difficulty": "hard",
+      "rule": 2,
+      "note": "Pide dinero, pero el problema principal es la maleta: la regla 2 gana a la 4.",
+      "split": "tune"
+    },
+    {
+      "id": "r22",
+      "text": "Me llegó un correo de que mi vuelo pasó de las 9:00 a las 13:30. Ese horario no me sirve, necesito otro vuelo a Antofagasta antes del mediodía.",
+      "route": "rebooking",
+      "difficulty": "clear",
+      "rule": 3,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r23",
+      "text": "La maleta llegó con una rueda rota y el cierre roto. Quiero reclamar el daño.",
+      "route": "baggage",
+      "difficulty": "clear",
+      "rule": 2,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r24",
+      "text": "Estoy embarazada de 31 semanas y viajo la próxima semana. ¿Qué certificado necesito?",
+      "route": "special_assistance",
+      "difficulty": "clear",
+      "rule": 1,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r25",
+      "text": "El vuelo se retrasó 2 horas. ¿Qué derechos tengo?",
+      "route": "other",
+      "difficulty": "hard",
+      "rule": 5,
+      "note": "Pregunta por derechos, sin pedir nada todavía.",
+      "split": "test"
+    },
+    {
+      "id": "r26",
+      "text": "Llegué 35 minutos antes y no me dejaron embarcar. ¿Qué pasa con mi pasaje?",
+      "route": "other",
+      "difficulty": "hard",
+      "rule": 5,
+      "note": "Pasajero no presentado: pregunta qué pasa, sin pedir volar ni dinero.",
+      "split": "tune"
+    },
+    {
+      "id": "r27",
+      "text": "¿Puedo viajar a Buenos Aires con la cédula chilena o necesito pasaporte?",
+      "route": "other",
+      "difficulty": "clear",
+      "rule": 5,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r28",
+      "text": "Viajo con mi perro de asistencia por primera vez. ¿Qué documentos tengo que presentar?",
+      "route": "special_assistance",
+      "difficulty": "clear",
+      "rule": 1,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r29",
+      "text": "Hola, el vuelo de mañana a Calama sale a las 6:00 y no alcanzo a llegar al aeropuerto. ¿Me cambian al de las 10?",
+      "route": "rebooking",
+      "difficulty": "clear",
+      "rule": 3,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r30",
+      "text": "Mi silla de ruedas eléctrica llegó con el control roto en el vuelo de ayer.",
+      "route": "special_assistance",
+      "difficulty": "hard",
+      "rule": 1,
+      "note": "Es un dispositivo de movilidad: la regla 1 gana a la 2 aunque viaje en bodega.",
+      "split": "tune"
+    },
+    {
+      "id": "r31",
+      "text": "me reprogramaron el vuelo 3 horas y llego tarde al matrimonio, hay algun vuelo antes??",
+      "route": "rebooking",
+      "difficulty": "clear",
+      "rule": 3,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r32",
+      "text": "Me cancelaron el PS1203 Santiago–Puerto Montt de mañana a las 7:10. Necesito llegar igual ese día, ¿me pueden pasar al vuelo de la tarde?",
+      "route": "rebooking",
+      "difficulty": "clear",
+      "rule": 3,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r33",
+      "text": "Pagué dos veces el asiento con la tarjeta, aparece el cargo duplicado de CLP 12.900. Quiero que me reembolsen uno.",
+      "route": "refund",
+      "difficulty": "clear",
+      "rule": 4,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r34",
+      "text": "Necesito cambiar la ruta: compré Santiago–Temuco pero ahora tengo que ir a Valdivia, mismo día. Tarifa Plus.",
+      "route": "rebooking",
+      "difficulty": "clear",
+      "rule": 3,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r35",
+      "text": "Me cancelaron el vuelo con dos días de aviso y la causa fue de ustedes. Quiero la compensación de CLP 40.000 en saldo.",
+      "route": "refund",
+      "difficulty": "clear",
+      "rule": 4,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r36",
+      "text": "Me cancelaron el vuelo de regreso desde Lima. ¿Qué vuelo me pueden ofrecer para volver esta semana?",
+      "route": "rebooking",
+      "difficulty": "clear",
+      "rule": 3,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r37",
+      "text": "Mi hija se enfermó y no podemos viajar el viernes. ¿Se puede mover todo a la próxima semana? Somos cuatro en la reserva PSB2X8.",
+      "route": "rebooking",
+      "difficulty": "hard",
+      "rule": 3,
+      "note": "Habla de una enfermedad, pero pide cambiar la fecha, no asistencia especial.",
+      "split": "tune"
+    },
+    {
+      "id": "r38",
+      "text": "Mi vuelo se canceló y me reubicaron, pero mi maleta siguió en el vuelo original. ¿Cómo la recupero en Concepción?",
+      "route": "baggage",
+      "difficulty": "hard",
+      "rule": 2,
+      "note": "Hubo una cancelación, pero lo pendiente es la maleta.",
+      "split": "test"
+    },
+    {
+      "id": "r39",
+      "text": "Gasté CLP 15.000 en comida durante el retraso y no me dieron el vale. ¿Me lo reembolsan?",
+      "route": "refund",
+      "difficulty": "clear",
+      "rule": 4,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r40",
+      "text": "El wifi a bordo no funcionó en todo el vuelo.",
+      "route": "other",
+      "difficulty": "clear",
+      "rule": 5,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r41",
+      "text": "Pedí silla de ruedas con 3 días de anticipación y nadie me esperó en la llegada a Calama. Tuve que caminar con dolor.",
+      "route": "special_assistance",
+      "difficulty": "hard",
+      "rule": 1,
+      "note": "Es un reclamo por un servicio de asistencia no prestado: la regla 1 incluye los reclamos.",
+      "split": "test"
+    },
+    {
+      "id": "r42",
+      "text": "Me abrieron la maleta y falta un perfume. Quiero hacer el reclamo.",
+      "route": "baggage",
+      "difficulty": "clear",
+      "rule": 2,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r43",
+      "text": "Buenas, ¿puedo adelantar mi vuelo de hoy a Concepción al de las 15:00? Tengo tarifa Full.",
+      "route": "rebooking",
+      "difficulty": "clear",
+      "rule": 3,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r44",
+      "text": "Mi hijo de 9 años viaja solo a Antofagasta en diciembre. ¿Qué tengo que contratar?",
+      "route": "special_assistance",
+      "difficulty": "clear",
+      "rule": 1,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r45",
+      "text": "¿Cuántos kilos puedo llevar en la maleta de bodega con tarifa Plus a Lima?",
+      "route": "baggage",
+      "difficulty": "clear",
+      "rule": 2,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r46",
+      "text": "Pagué el cambio de fecha y después ustedes cancelaron el vuelo nuevo. Quiero que me devuelvan el cargo del cambio.",
+      "route": "refund",
+      "difficulty": "hard",
+      "rule": 4,
+      "note": "Habla de cambios, pero pide devolver un cargo.",
+      "split": "tune"
+    },
+    {
+      "id": "r47",
+      "text": "Quiero felicitar a la tripulación del vuelo de ayer a Calama, muy amables.",
+      "route": "other",
+      "difficulty": "clear",
+      "rule": 5,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r48",
+      "text": "Hi, my flight PS0804 to Easter Island was cancelled. Can you put me on the next available flight?",
+      "route": "rebooking",
+      "difficulty": "clear",
+      "rule": 3,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r49",
+      "text": "En el embarque me obligaron a mandar mi equipaje de mano a bodega y llegó rota la manilla.",
+      "route": "baggage",
+      "difficulty": "hard",
+      "rule": 2,
+      "note": "Ocurrió en el embarque, pero el daño es a la maleta.",
+      "split": "test"
+    },
+    {
+      "id": "r50",
+      "text": "¿Puedo usar mi notebook durante el despegue?",
+      "route": "other",
+      "difficulty": "clear",
+      "rule": 5,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r51",
+      "text": "Mi mamá usa silla de ruedas y viaja el 22/11 a Temuco. ¿Cómo solicito la asistencia para embarcar?",
+      "route": "special_assistance",
+      "difficulty": "clear",
+      "rule": 1,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r52",
+      "text": "Necesito cambiar mi vuelo porque tengo 37 semanas de embarazo y me dijeron que no puedo volar.",
+      "route": "special_assistance",
+      "difficulty": "hard",
+      "rule": 1,
+      "note": "Pide un cambio, pero la causa es una restricción de embarazo: la regla 1 gana a la 3.",
+      "split": "tune"
+    },
+    {
+      "id": "r53",
+      "text": "El vuelo se atrasó 6 horas y decidí no viajar. Corresponde que me devuelvan todo, ¿cómo lo pido?",
+      "route": "refund",
+      "difficulty": "clear",
+      "rule": 4,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r54",
+      "text": "Mi maleta llegó mojada y con la ropa manchada. Necesito saber cómo reclamar.",
+      "route": "baggage",
+      "difficulty": "clear",
+      "rule": 2,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r55",
+      "text": "La tapa de la guitarra llegó partida. Iba como equipaje especial pagado.",
+      "route": "baggage",
+      "difficulty": "clear",
+      "rule": 2,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r56",
+      "text": "Soy sordo y quiero saber si avisan los cambios de puerta por escrito o en pantalla.",
+      "route": "special_assistance",
+      "difficulty": "hard",
+      "rule": 1,
+      "note": "No está en la política, pero es una necesidad de asistencia para viajar.",
+      "split": "tune"
+    },
+    {
+      "id": "r57",
+      "text": "Por trabajo tengo que volver un día antes. Reserva PS7TRM, vuelta el domingo; la quiero el sábado.",
+      "route": "rebooking",
+      "difficulty": "clear",
+      "rule": 3,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r58",
+      "text": "La maleta se perdió y además el vuelo se atrasó 3 horas. Lo que necesito es encontrar la maleta, tiene mis remedios.",
+      "route": "baggage",
+      "difficulty": "hard",
+      "rule": 2,
+      "note": "Mezcla retraso y equipaje; menciona remedios, pero no pide asistencia: pide encontrar la maleta.",
+      "split": "tune"
+    },
+    {
+      "id": "r59",
+      "text": "Mi sobrina de 15 años viaja sola a Puerto Montt. ¿Necesita el servicio de menor no acompañado?",
+      "route": "special_assistance",
+      "difficulty": "clear",
+      "rule": 1,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r60",
+      "text": "Perdí la conexión en Santiago porque el vuelo desde Calama llegó 50 minutos tarde. Era la misma reserva. Estoy en el aeropuerto, ¿en qué vuelo me van a mandar a Punta Arenas?",
+      "route": "rebooking",
+      "difficulty": "clear",
+      "rule": 3,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r61",
+      "text": "Hola, quiero cambiar mi vuelo del 14/11 al 16/11, mismo horario. Reserva PSK9QL, tarifa Plus.",
+      "route": "rebooking",
+      "difficulty": "clear",
+      "rule": 3,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r62",
+      "text": "La auxiliar fue muy grosera conmigo en el vuelo PS0322. Quiero dejar constancia.",
+      "route": "other",
+      "difficulty": "clear",
+      "rule": 5,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r63",
+      "text": "Me cancelaron el vuelo a Arica y ya no necesito viajar. Quiero la devolución completa del pasaje con tasas.",
+      "route": "refund",
+      "difficulty": "clear",
+      "rule": 4,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r64",
+      "text": "Por el retraso tuve que pagar hotel en Santiago, CLP 78.000 con boleta. Quiero el reembolso.",
+      "route": "refund",
+      "difficulty": "clear",
+      "rule": 4,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r65",
+      "text": "Se me quedó un notebook en el compartimiento de arriba del vuelo de anoche. ¿Dónde lo reclamo?",
+      "route": "baggage",
+      "difficulty": "clear",
+      "rule": 2,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r66",
+      "text": "Viajo con mi perro de asistencia y ya está todo informado; solo necesito cambiar el vuelo del lunes al martes.",
+      "route": "rebooking",
+      "difficulty": "hard",
+      "rule": 3,
+      "note": "Menciona un perro de asistencia ya gestionado; lo que pide es cambiar la fecha.",
+      "split": "test"
+    },
+    {
+      "id": "r67",
+      "text": "Mi vuelo a Puerto Natales fue reprogramado 4 horas; no me sirve ningún otro horario, así que prefiero la devolución.",
+      "route": "refund",
+      "difficulty": "hard",
+      "rule": 4,
+      "note": "Descarta otros vuelos y elige la devolución.",
+      "split": "test"
+    },
+    {
+      "id": "r68",
+      "text": "No me llegó el correo de confirmación de la compra.",
+      "route": "other",
+      "difficulty": "clear",
+      "rule": 5,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r69",
+      "text": "Hola, desistí de viajar dentro de las 24 horas de comprar. ¿Me devuelven el 100%?",
+      "route": "refund",
+      "difficulty": "clear",
+      "rule": 4,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r70",
+      "text": "El vuelo se retrasó 5 horas y ya perdí la reunión. Prefiero irme en el primer vuelo de mañana y que me den hotel esta noche.",
+      "route": "rebooking",
+      "difficulty": "hard",
+      "rule": 3,
+      "note": "Pide volar al día siguiente; el hotel es asistencia del retraso, no una devolución.",
+      "split": "test"
+    },
+    {
+      "id": "r71",
+      "text": "Quiero cambiar la fecha o, si no se puede, que me devuelvan la plata. Lo que sea más rápido, pero ojalá viajar el 20.",
+      "route": "rebooking",
+      "difficulty": "hard",
+      "rule": 3,
+      "note": "Ofrece dos alternativas, pero prefiere viajar: por la regla 3 gana volar.",
+      "split": "tune"
+    },
+    {
+      "id": "r72",
+      "text": "¿A qué hora abre el mesón de Pacífico Sur en el aeropuerto de Concepción?",
+      "route": "other",
+      "difficulty": "clear",
+      "rule": 5,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r73",
+      "text": "Ya volé, pero el vuelo de ida se canceló y tuve que comprar otro pasaje en otra aerolínea. Quiero que me devuelvan el tramo que no usé.",
+      "route": "refund",
+      "difficulty": "hard",
+      "rule": 4,
+      "note": "Ya no pide volar: pide dinero por el tramo no usado.",
+      "split": "tune"
+    },
+    {
+      "id": "r74",
+      "text": "Mi nombre está mal escrito en la reserva: dice Gonzales y es González.",
+      "route": "other",
+      "difficulty": "hard",
+      "rule": 5,
+      "note": "Corrige datos, no pide cambiar el vuelo.",
+      "split": "tune"
+    },
+    {
+      "id": "r75",
+      "text": "Quiero llevar una tabla de surf a Arica, ¿cómo la registro?",
+      "route": "baggage",
+      "difficulty": "clear",
+      "rule": 2,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r76",
+      "text": "Me cancelaron el vuelo y nadie me avisó. Pésimo servicio. Exijo una explicación.",
+      "route": "other",
+      "difficulty": "hard",
+      "rule": 5,
+      "note": "Hay una cancelación, pero solo pide una explicación: no pide volar ni dinero.",
+      "split": "tune"
+    },
+    {
+      "id": "r77",
+      "text": "Uso un concentrador de oxígeno portátil. ¿Lo puedo llevar a bordo en el vuelo a Lima?",
+      "route": "special_assistance",
+      "difficulty": "clear",
+      "rule": 1,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r78",
+      "text": "Hola, ¿puedo llevar una bicicleta como equipaje especial en vuelos nacionales?",
+      "route": "baggage",
+      "difficulty": "clear",
+      "rule": 2,
+      "note": "",
+      "split": "tune"
+    },
+    {
+      "id": "r79",
+      "text": "¿Cuándo me pagan la devolución que pedí el 20/10? Ya pasaron más de 5 días hábiles.",
+      "route": "refund",
+      "difficulty": "clear",
+      "rule": 4,
+      "note": "",
+      "split": "test"
+    },
+    {
+      "id": "r80",
+      "text": "Cancelaron mi vuelo; puede que viaje en otra fecha, pero por ahora quiero saber cuánto me devolverían si lo anulo.",
+      "route": "other",
+      "difficulty": "hard",
+      "rule": 5,
+      "note": "Pregunta un monto antes de decidir: no pide volar ni pide la devolución todavía.",
+      "split": "tune"
+    }
+  ]
+}
