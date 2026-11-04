@@ -13,7 +13,7 @@ base_url = ""
 # Con una clave propia se puede usar cualquier proveedor de PydanticAI, por ejemplo "openai-chat:...".
 generation = "google:gemini-3.5-flash-lite"  # nivel gratuito: 15 por minuto y 500 por día (AI Studio, 14/10/2026); los Flash solo 20 por día
 comparison = "google:gemma-4-26b-a4b-it"  # pesos abiertos, gratis; en clase también "curso:course-chat" (servidor del curso con Gemma 4 12B)
-decision = "d1:colab"  # laboratorio 4: d1-3B con llama-server en tu sesión de Colab; en clase, "d1:curso" (servidor del curso)
+decision = "d1:colab"  # laboratorio 4: d1-2B con llama-server en tu sesión de Colab; en clase, "d1:curso" (servidor del curso)
 embedding = "google:gemini-embedding-2"  # laboratorio 3; nivel gratuito: 100 textos por minuto (prueba del 27/10/2026); el servidor del curso no sirve embeddings
 
 # Precios en USD por millón de tokens, con su fuente y fecha de consulta.
@@ -35,7 +35,7 @@ date = "13/10/2026"
 [prices."d1:colab"]
 input = 0.0
 output = 0.0
-source = "d1-3B con llama-server en la sesión de Colab: sin costo por token; consume la cuota de cómputo de Colab"
+source = "d1-2B con llama-server en la sesión de Colab: sin costo por token; consume la cuota de cómputo de Colab"
 date = "04/11/2026"
 
 [prices."d1:curso"]

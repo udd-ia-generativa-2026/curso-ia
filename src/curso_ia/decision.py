@@ -1,7 +1,7 @@
-"""Laboratorio 4: la ruta del reclamo con un modelo de decisión (d1-3B) y con un modelo de lenguaje.
+"""Laboratorio 4: la ruta del reclamo con un modelo de decisión (d1-2B) y con un modelo de lenguaje.
 
 El notebook deja a la vista el esquema, las instrucciones, el `Agent` y el barrido del umbral. Aquí quedan
-el arranque de d1-3B en Colab, la conexión con el servidor del curso y la ejecución medida de los casos.
+el arranque de d1-2B en Colab, la conexión con el servidor del curso y la ejecución medida de los casos.
 """
 
 from __future__ import annotations
@@ -25,12 +25,12 @@ from pydantic_ai.usage import UsageLimits
 from .config import Config, ConfigError
 from .files import lab_resource, load_json
 
-# Versión fija de llama.cpp: d1 necesita b11490 o posterior; esta se probó el 04/11/2026.
+# Versión fija de llama.cpp: d1-2B necesita b11960 o posterior; esta se probó el 04/11/2026.
 LLAMA_BUILD = "b12110"
 LLAMA_URL = "https://github.com/ggml-org/llama.cpp/releases/download/{build}/{asset}"
 CPU_ASSET = "llama-{build}-bin-ubuntu-x64.tar.gz"
 CUDA_ASSETS = ("llama-{build}-bin-ubuntu-cuda-12.8-x64.tar.gz", "cudart-llama-{build}-bin-ubuntu-cuda-12.8-x64.tar.gz")
-D1_URL = "https://huggingface.co/LiquidAI/d1-3B-GGUF/resolve/main/d1-3B-{quant}.gguf"
+D1_URL = "https://huggingface.co/LiquidAI/d1-2B-GGUF/resolve/main/d1-2B-{quant}.gguf"
 LOCAL_PORT = 8080
 TIMEOUT_S = 90
 ROUTES = ("rebooking", "refund", "baggage", "special_assistance", "other")
@@ -42,7 +42,7 @@ def load_routes() -> dict:
 
 
 # ---------------------------------------------------------------------------
-# d1-3B en la sesión de Colab
+# d1-2B en la sesión de Colab
 
 def _healthy(port: int) -> bool:
     try:
@@ -96,23 +96,24 @@ def _library_path(binary: Path) -> str:
 
 
 def start_d1(quant: str = "Q8_0", port: int = LOCAL_PORT, folder: Path | None = None, gpu: bool | None = None) -> str:
-    """Descargar llama.cpp y d1-3B, levantar `llama-server` en esta sesión y devolver su dirección.
+    """Descargar llama.cpp y d1-2B, levantar `llama-server` en esta sesión y devolver su dirección.
 
     Con GPU usa la compilación CUDA y carga todo el modelo en la GPU; si no arranca, sigue en CPU.
     Si el servidor ya está en marcha, no lo vuelve a levantar.
     """
     url = f"http://127.0.0.1:{port}"
     if _healthy(port):
-        print("d1-3B ya estaba en marcha en", url)
+        print("d1-2B ya estaba en marcha en", url)
         return url
     folder = Path(folder or ("/content/d1" if Path("/content").exists() else Path.home() / ".cache/curso-ia/d1"))
     folder.mkdir(parents=True, exist_ok=True)
-    weights = _download(D1_URL.format(quant=quant), folder / f"d1-3B-{quant}.gguf")
+    weights = _download(D1_URL.format(quant=quant), folder / f"d1-2B-{quant}.gguf")
     gpu = _has_gpu() if gpu is None else gpu
     for use_gpu in ([True, False] if gpu else [False]):
         binary = _llama_server(folder, use_gpu)
+        # d1-2B lee cada pregunta en un solo lote: -b y -ub deben cubrir el estado completo (ficha del modelo).
         command = [str(binary), "-m", str(weights), "--host", "127.0.0.1", "--port", str(port), "-c", "8192",
-                   "-t", str(os.cpu_count() or 2)] + (["-ngl", "99"] if use_gpu else [])
+                   "-b", "8192", "-ub", "8192", "-t", str(os.cpu_count() or 2)] + (["-ngl", "99"] if use_gpu else [])
         env = {**os.environ, "LD_LIBRARY_PATH": _library_path(binary)}
         log = (folder / f"llama-server-{'gpu' if use_gpu else 'cpu'}.log").open("w")
         process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT, env=env)
@@ -120,11 +121,11 @@ def start_d1(quant: str = "Q8_0", port: int = LOCAL_PORT, folder: Path | None = 
         while time.monotonic() < deadline and process.poll() is None and not _healthy(port):
             time.sleep(2)
         if _healthy(port):
-            print(f"d1-3B ({quant}) en marcha en {url}, con {'GPU' if use_gpu else 'CPU'}.")
+            print(f"d1-2B ({quant}) en marcha en {url}, con {'GPU' if use_gpu else 'CPU'}.")
             return url
         process.terminate()
         print(f"llama-server no arrancó con {'GPU' if use_gpu else 'CPU'}; revisa {log.name}.")
-    raise RuntimeError("No se pudo levantar d1-3B en esta sesión.")
+    raise RuntimeError("No se pudo levantar d1-2B en esta sesión.")
 
 
 def d1_model(where: str, config: Config):
@@ -136,14 +137,14 @@ def d1_model(where: str, config: Config):
 
     if where == "colab":
         if not _healthy(LOCAL_PORT):
-            raise ConfigError("d1-3B no está en marcha en esta sesión: ejecuta start_d1().")
+            raise ConfigError("d1-2B no está en marcha en esta sesión: ejecuta start_d1().")
         provider = SystemOneProvider(base_url=f"http://127.0.0.1:{LOCAL_PORT}", api_key="local")
     elif where == "curso":
         base = config.course_base_url.rstrip("/")
         if not base or not config.key("curso"):
             raise ConfigError("Falta configurar: CURSO_BASE_URL, CURSO_API_KEY.")
         _check_url(base)
-        # El servidor publica el chat en /v1 y d1-3B en /d1, con la misma clave del día.
+        # El servidor publica el chat en /v1 y d1-2B en /d1, con la misma clave del día.
         base = base.removesuffix("/v1") + "/d1"
         provider = SystemOneProvider(base_url=base, api_key=config.key("curso"))
     else:
