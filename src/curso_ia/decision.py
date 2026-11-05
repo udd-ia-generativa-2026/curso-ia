@@ -114,6 +114,7 @@ def start_d1(quant: str = "Q8_0", folder: Path | None = None, gpu: bool | None =
     """Descargar llama.cpp y d1-2B, levantar `llama-server` en esta sesión y devolver su dirección.
 
     Con GPU usa la compilación CUDA y carga todo el modelo en la GPU; si no arranca, sigue en CPU.
+    Medido en Colab el 05/11/2026: unos 9 s los 80 casos con T4 y unos 39 s por caso en CPU.
     Si el servidor ya está en marcha, no lo vuelve a levantar.
     """
     global _session_port
@@ -124,6 +125,9 @@ def start_d1(quant: str = "Q8_0", folder: Path | None = None, gpu: bool | None =
     folder.mkdir(parents=True, exist_ok=True)
     weights = _download(D1_URL.format(quant=quant), folder / f"d1-2B-{quant}.gguf")
     gpu = _has_gpu() if gpu is None else gpu
+    if not gpu:
+        print("Sin GPU: en la CPU de Colab cada caso tarda unos 40 s (cerca de una hora los 80). "
+              "Si puedes, cambia el entorno a T4 GPU y vuelve a ejecutar desde la instalación.")
     for use_gpu in ([True, False] if gpu else [False]):
         binary = _llama_server(folder, use_gpu)
         port = _free_port(LOCAL_PORT)
