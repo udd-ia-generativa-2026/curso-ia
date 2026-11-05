@@ -10,6 +10,7 @@ import asyncio
 import os
 import random
 import shutil
+import socket
 import subprocess
 import tarfile
 import time
@@ -31,8 +32,10 @@ LLAMA_URL = "https://github.com/ggml-org/llama.cpp/releases/download/{build}/{as
 CPU_ASSET = "llama-{build}-bin-ubuntu-x64.tar.gz"
 CUDA_ASSETS = ("llama-{build}-bin-ubuntu-cuda-12.8-x64.tar.gz", "cudart-llama-{build}-bin-ubuntu-cuda-12.8-x64.tar.gz")
 D1_URL = "https://huggingface.co/LiquidAI/d1-2B-GGUF/resolve/main/d1-2B-{quant}.gguf"
-LOCAL_PORT = 8080
+# Colab ya ocupa el 8080 con su propio servidor; si este también está ocupado, start_d1() busca otro libre.
+LOCAL_PORT = 8181
 TIMEOUT_S = 90
+_session_port = LOCAL_PORT  # el que eligió start_d1() en esta sesión
 ROUTES = ("rebooking", "refund", "baggage", "special_assistance", "other")
 
 
@@ -50,6 +53,18 @@ def _healthy(port: int) -> bool:
             return response.status == 200
     except OSError:
         return False
+
+
+def _free_port(port: int) -> int:
+    """El puerto pedido si está libre; si no, uno libre que asigna el sistema."""
+    for candidate in (port, 0):
+        with socket.socket() as probe:
+            try:
+                probe.bind(("127.0.0.1", candidate))
+            except OSError:
+                continue
+            return probe.getsockname()[1]
+    raise RuntimeError("No hay un puerto libre para llama-server.")
 
 
 def _has_gpu() -> bool:
@@ -95,22 +110,24 @@ def _library_path(binary: Path) -> str:
     return ":".join([*(str(folder) for folder in sorted(folders)), os.environ.get("LD_LIBRARY_PATH", "")])
 
 
-def start_d1(quant: str = "Q8_0", port: int = LOCAL_PORT, folder: Path | None = None, gpu: bool | None = None) -> str:
+def start_d1(quant: str = "Q8_0", folder: Path | None = None, gpu: bool | None = None) -> str:
     """Descargar llama.cpp y d1-2B, levantar `llama-server` en esta sesión y devolver su dirección.
 
     Con GPU usa la compilación CUDA y carga todo el modelo en la GPU; si no arranca, sigue en CPU.
     Si el servidor ya está en marcha, no lo vuelve a levantar.
     """
-    url = f"http://127.0.0.1:{port}"
-    if _healthy(port):
-        print("d1-2B ya estaba en marcha en", url)
-        return url
+    global _session_port
+    if _healthy(_session_port):
+        print("d1-2B ya estaba en marcha en", f"http://127.0.0.1:{_session_port}")
+        return f"http://127.0.0.1:{_session_port}"
     folder = Path(folder or ("/content/d1" if Path("/content").exists() else Path.home() / ".cache/curso-ia/d1"))
     folder.mkdir(parents=True, exist_ok=True)
     weights = _download(D1_URL.format(quant=quant), folder / f"d1-2B-{quant}.gguf")
     gpu = _has_gpu() if gpu is None else gpu
     for use_gpu in ([True, False] if gpu else [False]):
         binary = _llama_server(folder, use_gpu)
+        port = _free_port(LOCAL_PORT)
+        url = f"http://127.0.0.1:{port}"
         # d1-2B lee cada pregunta en un solo lote: -b y -ub deben cubrir el estado completo (ficha del modelo).
         command = [str(binary), "-m", str(weights), "--host", "127.0.0.1", "--port", str(port), "-c", "8192",
                    "-b", "8192", "-ub", "8192", "-t", str(os.cpu_count() or 2)] + (["-ngl", "99"] if use_gpu else [])
@@ -121,10 +138,15 @@ def start_d1(quant: str = "Q8_0", port: int = LOCAL_PORT, folder: Path | None = 
         while time.monotonic() < deadline and process.poll() is None and not _healthy(port):
             time.sleep(2)
         if _healthy(port):
+            _session_port = port
             print(f"d1-2B ({quant}) en marcha en {url}, con {'GPU' if use_gpu else 'CPU'}.")
             return url
         process.terminate()
-        print(f"llama-server no arrancó con {'GPU' if use_gpu else 'CPU'}; revisa {log.name}.")
+        process.wait(timeout=30)  # libera el puerto antes del siguiente intento
+        log.close()
+        tail = Path(log.name).read_text(errors="replace").splitlines()[-5:]
+        print(f"llama-server no arrancó con {'GPU' if use_gpu else 'CPU'}. Últimas líneas de {log.name}:")
+        print("\n".join(tail))
     raise RuntimeError("No se pudo levantar d1-2B en esta sesión.")
 
 
@@ -136,9 +158,9 @@ def d1_model(where: str, config: Config):
     from .models import _check_url
 
     if where == "colab":
-        if not _healthy(LOCAL_PORT):
+        if not _healthy(_session_port):
             raise ConfigError("d1-2B no está en marcha en esta sesión: ejecuta start_d1().")
-        provider = SystemOneProvider(base_url=f"http://127.0.0.1:{LOCAL_PORT}", api_key="local")
+        provider = SystemOneProvider(base_url=f"http://127.0.0.1:{_session_port}", api_key="local")
     elif where == "curso":
         base = config.course_base_url.rstrip("/")
         if not base or not config.key("curso"):
