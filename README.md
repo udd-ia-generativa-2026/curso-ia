@@ -10,6 +10,8 @@ Laboratorio 2: [![Abrir en Colab](https://colab.research.google.com/assets/colab
 
 Laboratorio 3: [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/lab03/notebooks/lab03.ipynb)
 
+Laboratorio 4: [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/lab04/notebooks/lab04.ipynb)
+
 Hito 1, línea base (apoyo opcional): [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/hito1/notebooks/hito1.ipynb)
 
 La primera celda de cada notebook instala el paquete:
@@ -22,7 +24,7 @@ Las claves van en **Secretos** de Colab con los nombres `CURSO_API_KEY` y `GOOGL
 
 ## Modelos
 
-Cada rol usa un modelo con la forma `proveedor:modelo`: `curso:` es el servidor del curso y `google:` es Gemini. Los valores por defecto están en `src/curso_ia/data/config.toml`; un repositorio puede traer su propio `config.toml`, y cada rol se cambia con `GENERATION_MODEL` o `COMPARISON_MODEL`. Una clave propia de otro proveedor nunca es obligatoria.
+Cada rol usa un modelo con la forma `proveedor:modelo`: `curso:` es el servidor del curso y `google:` es Gemini. El rol `decision` usa d1-2B: `d1:curso` en el servidor del curso y `d1:colab` en la propia sesión de Colab. Los valores por defecto están en `src/curso_ia/data/config.toml`; un repositorio puede traer su propio `config.toml`, y cada rol se cambia con `GENERATION_MODEL`, `COMPARISON_MODEL`, `EMBEDDING_MODEL` o `DECISION_MODEL`. Una clave propia de otro proveedor nunca es obligatoria.
 
 ## Desarrollo
 
@@ -53,6 +55,16 @@ Los embeddings usan `gemini-embedding-2` (rol `embedding`, variable `EMBEDDING_M
 El rerank usa `gte-multilingual-reranker-base`, cuyo código propio no funciona con transformers 5: el extra fija `transformers<5` (prueba del 28/10/2026).
 
 Comprobaciones: `uv sync --extra lab03` y `uv run pytest`; el notebook corre completo en modo simulado sin claves. `python scripts/build_lab03_review.py` prepara en `dist/lab03-review/` el notebook y un ZIP del paquete para el ensayo en Colab, como en el laboratorio 2. Con uv, NLTK rechaza los archivos instalados con enlaces duros: usar `UV_LINK_MODE=copy`.
+
+## Laboratorio 4 · Ruta del mensaje con un modelo de decisión y un umbral
+
+El notebook `notebooks/lab04.ipynb` decide a cuál de cinco equipos va el mensaje de un pasajero de Pacífico Sur (`rebooking`, `refund`, `baggage`, `special_assistance` u `other`), según cinco reglas que se aplican en orden, con un modelo de decisión (d1-2B de LiquidAI) y con un modelo de lenguaje, y compara aciertos, latencia y costo sobre 80 mensajes sintéticos etiquetados. Después barre un umbral de confianza en los 41 casos `tune`, deriva a una persona los casos bajo el umbral y comprueba el rango elegido en los 39 casos `test`. Deja visibles el esquema, la instrucción, los dos `Agent`, el barrido y la comprobación; `curso_ia.decision` aporta los casos, el arranque de d1-2B en Colab, la conexión con el servidor del curso y la ejecución medida. Guarda `decisions.csv`, `sweep.csv` y `experiment.json` en `labs/lab04-decision/`. Solo necesita las dependencias base del paquete.
+
+d1-2B se usa en clase con `d1:curso`, en `/d1` del servidor del curso con la clave del día. Fuera de clase, `d1:colab` y `start_d1()` descargan `llama-server` de llama.cpp (versión fija b12110; d1-2B necesita b11960 o posterior) y el GGUF `Q8_0` o `Q4_K_M`, y los levantan en la sesión, en el puerto 8181 o en otro libre. Con una GPU T4, los 80 casos tardan unos segundos; en la CPU de Colab, unos 40 s por caso. El modelo de lenguaje es `curso:course-chat` en clase y `google:gemini-3.5-flash-lite` fuera de ella. d1 usa la licencia LFM Open License v1.0, que restringe el uso comercial según los ingresos de la entidad.
+
+El esquema usa un `Literal` con las rutas y las reglas en `instructions`, y no un `Enum` con una descripción por opción: con estos 80 casos, d1-2B acertó 75 así y entre 62 y 72 con descripciones (prueba del 06/11/2026). En un notebook, `UseEnumMemberDocstrings` pierde las descripciones sin avisar; `Choices` las conserva. Con `llama-server`, PydanticAI 2.55 rechaza las rúbricas, porque `llama-server` redondea `score` al entero.
+
+Comprobaciones: `uv run pytest`; el notebook corre completo en modo simulado sin claves ni modelo de decisión.
 
 ## Hito 1 · Línea base, apoyo opcional
 
