@@ -1,0 +1,592 @@
+{
+ "name": "Laboratorio 5 · Cambios de vuelo de Pacífico Sur",
+ "metadata": {
+  "now": "2026-11-13T09:00:00-03:00",
+  "cities": {
+   "SCL": "Santiago",
+   "PMC": "Puerto Montt",
+   "ANF": "Antofagasta",
+   "PUQ": "Punta Arenas",
+   "CCP": "Concepción"
+  },
+  "note": "Datos sintéticos de una aerolínea ficticia."
+ },
+ "flights": [
+  {
+   "flight_number": "PS0101",
+   "origin": "SCL",
+   "destination": "PMC",
+   "departure": "2026-11-13T07:10:00-03:00",
+   "status": "cancelled",
+   "seats_available": 0,
+   "fares_clp": {
+    "Light": 52000,
+    "Plus": 68000,
+    "Full": 108000
+   },
+   "cause": "Falla técnica del avión",
+   "attributable": true
+  },
+  {
+   "flight_number": "PS0103",
+   "origin": "SCL",
+   "destination": "PMC",
+   "departure": "2026-11-13T11:40:00-03:00",
+   "status": "scheduled",
+   "seats_available": 0,
+   "fares_clp": {
+    "Light": 64000,
+    "Plus": 80000,
+    "Full": 122000
+   }
+  },
+  {
+   "flight_number": "PS0105",
+   "origin": "SCL",
+   "destination": "PMC",
+   "departure": "2026-11-13T15:20:00-03:00",
+   "status": "scheduled",
+   "seats_available": 4,
+   "fares_clp": {
+    "Light": 62000,
+    "Plus": 78000,
+    "Full": 120000
+   }
+  },
+  {
+   "flight_number": "PS0107",
+   "origin": "SCL",
+   "destination": "PMC",
+   "departure": "2026-11-13T19:50:00-03:00",
+   "status": "scheduled",
+   "seats_available": 12,
+   "fares_clp": {
+    "Light": 54000,
+    "Plus": 70000,
+    "Full": 110000
+   }
+  },
+  {
+   "flight_number": "PS0111",
+   "origin": "SCL",
+   "destination": "PMC",
+   "departure": "2026-11-14T07:10:00-03:00",
+   "status": "scheduled",
+   "seats_available": 20,
+   "fares_clp": {
+    "Light": 48000,
+    "Plus": 64000,
+    "Full": 104000
+   }
+  },
+  {
+   "flight_number": "PS0113",
+   "origin": "SCL",
+   "destination": "PMC",
+   "departure": "2026-11-14T15:20:00-03:00",
+   "status": "scheduled",
+   "seats_available": 9,
+   "fares_clp": {
+    "Light": 58000,
+    "Plus": 74000,
+    "Full": 116000
+   }
+  },
+  {
+   "flight_number": "PS0115",
+   "origin": "SCL",
+   "destination": "PMC",
+   "departure": "2026-11-15T07:10:00-03:00",
+   "status": "scheduled",
+   "seats_available": 14,
+   "fares_clp": {
+    "Light": 61000,
+    "Plus": 77000,
+    "Full": 118000
+   }
+  },
+  {
+   "flight_number": "PS0117",
+   "origin": "SCL",
+   "destination": "PMC",
+   "departure": "2026-11-15T19:50:00-03:00",
+   "status": "scheduled",
+   "seats_available": 2,
+   "fares_clp": {
+    "Light": 50000,
+    "Plus": 66000,
+    "Full": 106000
+   }
+  },
+  {
+   "flight_number": "PS0201",
+   "origin": "SCL",
+   "destination": "ANF",
+   "departure": "2026-11-13T10:30:00-03:00",
+   "status": "rescheduled",
+   "seats_available": 6,
+   "fares_clp": {
+    "Light": 71000,
+    "Plus": 89000,
+    "Full": 131000
+   },
+   "new_departure": "2026-11-13T13:40:00-03:00",
+   "cause": "Reorganización de la flota",
+   "attributable": true
+  },
+  {
+   "flight_number": "PS0203",
+   "origin": "SCL",
+   "destination": "ANF",
+   "departure": "2026-11-13T13:00:00-03:00",
+   "status": "scheduled",
+   "seats_available": 5,
+   "fares_clp": {
+    "Light": 75000,
+    "Plus": 93000,
+    "Full": 135000
+   }
+  },
+  {
+   "flight_number": "PS0205",
+   "origin": "SCL",
+   "destination": "ANF",
+   "departure": "2026-11-13T18:45:00-03:00",
+   "status": "scheduled",
+   "seats_available": 0,
+   "fares_clp": {
+    "Light": 69000,
+    "Plus": 87000,
+    "Full": 129000
+   }
+  },
+  {
+   "flight_number": "PS0207",
+   "origin": "SCL",
+   "destination": "ANF",
+   "departure": "2026-11-14T08:00:00-03:00",
+   "status": "scheduled",
+   "seats_available": 15,
+   "fares_clp": {
+    "Light": 66000,
+    "Plus": 84000,
+    "Full": 126000
+   }
+  },
+  {
+   "flight_number": "PS0209",
+   "origin": "SCL",
+   "destination": "ANF",
+   "departure": "2026-11-14T18:45:00-03:00",
+   "status": "scheduled",
+   "seats_available": 10,
+   "fares_clp": {
+    "Light": 70000,
+    "Plus": 88000,
+    "Full": 130000
+   }
+  },
+  {
+   "flight_number": "PS0211",
+   "origin": "SCL",
+   "destination": "ANF",
+   "departure": "2026-11-16T08:00:00-03:00",
+   "status": "scheduled",
+   "seats_available": 18,
+   "fares_clp": {
+    "Light": 73000,
+    "Plus": 91000,
+    "Full": 133000
+   }
+  },
+  {
+   "flight_number": "PS0301",
+   "origin": "SCL",
+   "destination": "PUQ",
+   "departure": "2026-11-13T08:30:00-03:00",
+   "status": "cancelled",
+   "seats_available": 0,
+   "fares_clp": {
+    "Light": 98000,
+    "Plus": 121000,
+    "Full": 165000
+   },
+   "cause": "Viento en Punta Arenas",
+   "attributable": false
+  },
+  {
+   "flight_number": "PS0303",
+   "origin": "SCL",
+   "destination": "PUQ",
+   "departure": "2026-11-13T14:00:00-03:00",
+   "status": "cancelled",
+   "seats_available": 0,
+   "fares_clp": {
+    "Light": 96000,
+    "Plus": 119000,
+    "Full": 163000
+   },
+   "cause": "Viento en Punta Arenas",
+   "attributable": false
+  },
+  {
+   "flight_number": "PS0305",
+   "origin": "SCL",
+   "destination": "PUQ",
+   "departure": "2026-11-14T08:30:00-03:00",
+   "status": "scheduled",
+   "seats_available": 0,
+   "fares_clp": {
+    "Light": 99000,
+    "Plus": 122000,
+    "Full": 166000
+   }
+  },
+  {
+   "flight_number": "PS0307",
+   "origin": "SCL",
+   "destination": "PUQ",
+   "departure": "2026-11-14T14:00:00-03:00",
+   "status": "scheduled",
+   "seats_available": 6,
+   "fares_clp": {
+    "Light": 101000,
+    "Plus": 124000,
+    "Full": 168000
+   }
+  },
+  {
+   "flight_number": "PS0309",
+   "origin": "SCL",
+   "destination": "PUQ",
+   "departure": "2026-11-15T08:30:00-03:00",
+   "status": "scheduled",
+   "seats_available": 3,
+   "fares_clp": {
+    "Light": 104000,
+    "Plus": 127000,
+    "Full": 171000
+   }
+  },
+  {
+   "flight_number": "PS0401",
+   "origin": "SCL",
+   "destination": "CCP",
+   "departure": "2026-11-13T11:15:00-03:00",
+   "status": "scheduled",
+   "seats_available": 7,
+   "fares_clp": {
+    "Light": 39000,
+    "Plus": 51000,
+    "Full": 79000
+   }
+  },
+  {
+   "flight_number": "PS0403",
+   "origin": "SCL",
+   "destination": "CCP",
+   "departure": "2026-11-13T17:30:00-03:00",
+   "status": "scheduled",
+   "seats_available": 8,
+   "fares_clp": {
+    "Light": 42000,
+    "Plus": 54000,
+    "Full": 82000
+   }
+  },
+  {
+   "flight_number": "PS0405",
+   "origin": "SCL",
+   "destination": "CCP",
+   "departure": "2026-11-14T09:00:00-03:00",
+   "status": "scheduled",
+   "seats_available": 11,
+   "fares_clp": {
+    "Light": 37000,
+    "Plus": 49000,
+    "Full": 77000
+   }
+  },
+  {
+   "flight_number": "PS0407",
+   "origin": "SCL",
+   "destination": "CCP",
+   "departure": "2026-11-20T09:00:00-03:00",
+   "status": "scheduled",
+   "seats_available": 16,
+   "fares_clp": {
+    "Light": 35000,
+    "Plus": 47000,
+    "Full": 75000
+   }
+  }
+ ],
+ "bookings": [
+  {
+   "booking_code": "QK4M2T",
+   "passenger_id": "P01",
+   "passenger": "Valentina Rojas",
+   "flight_number": "PS0101",
+   "fare_family": "Plus",
+   "paid_fare_clp": 68000,
+   "channel": "web"
+  },
+  {
+   "booking_code": "ZR7PL3",
+   "passenger_id": "P02",
+   "passenger": "Martín Herrera",
+   "flight_number": "PS0101",
+   "fare_family": "Light",
+   "paid_fare_clp": 52000,
+   "channel": "web"
+  },
+  {
+   "booking_code": "HN3VD8",
+   "passenger_id": "P03",
+   "passenger": "Fernanda Muñoz",
+   "flight_number": "PS0201",
+   "fare_family": "Light",
+   "paid_fare_clp": 71000,
+   "channel": "web"
+  },
+  {
+   "booking_code": "BT6WQ1",
+   "passenger_id": "P04",
+   "passenger": "Ignacio Soto",
+   "flight_number": "PS0113",
+   "fare_family": "Plus",
+   "paid_fare_clp": 74000,
+   "channel": "web"
+  },
+  {
+   "booking_code": "LM2XE9",
+   "passenger_id": "P05",
+   "passenger": "Catalina Díaz",
+   "flight_number": "PS0207",
+   "fare_family": "Light",
+   "paid_fare_clp": 66000,
+   "channel": "web"
+  },
+  {
+   "booking_code": "JC8RA5",
+   "passenger_id": "P06",
+   "passenger": "Tomás Fuentes",
+   "flight_number": "PS0209",
+   "fare_family": "Light",
+   "paid_fare_clp": 70000,
+   "channel": "web"
+  },
+  {
+   "booking_code": "WD5KN7",
+   "passenger_id": "P07",
+   "passenger": "Paula Contreras",
+   "flight_number": "PS0405",
+   "fare_family": "Plus",
+   "paid_fare_clp": 49000,
+   "channel": "agency"
+  },
+  {
+   "booking_code": "FV9TS4",
+   "passenger_id": "P08",
+   "passenger": "Diego Morales",
+   "flight_number": "PS0401",
+   "fare_family": "Light",
+   "paid_fare_clp": 39000,
+   "channel": "web"
+  },
+  {
+   "booking_code": "RX1GH6",
+   "passenger_id": "P09",
+   "passenger": "Antonia Silva",
+   "flight_number": "PS0307",
+   "fare_family": "Full",
+   "paid_fare_clp": 150000,
+   "channel": "web"
+  },
+  {
+   "booking_code": "YP4CM2",
+   "passenger_id": "P10",
+   "passenger": "Benjamín Torres",
+   "flight_number": "PS0303",
+   "fare_family": "Plus",
+   "paid_fare_clp": 119000,
+   "channel": "web"
+  },
+  {
+   "booking_code": "SE7BU3",
+   "passenger_id": "P11",
+   "passenger": "Josefa Reyes",
+   "flight_number": "PS0105",
+   "fare_family": "Plus",
+   "paid_fare_clp": 78000,
+   "channel": "web"
+  },
+  {
+   "booking_code": "NA5QF8",
+   "passenger_id": "P12",
+   "passenger": "Cristóbal Vega",
+   "flight_number": "PS0111",
+   "fare_family": "Full",
+   "paid_fare_clp": 104000,
+   "channel": "web"
+  }
+ ],
+ "cases": [
+  {
+   "id": "c01",
+   "passenger_id": "P01",
+   "difficulty": "clear",
+   "text": "Hola, me llegó un correo de que cancelaron mi vuelo de las 7:10 a Puerto Montt (reserva QK4M2T). Necesito llegar hoy sí o sí, ¿me pueden poner en otro vuelo?",
+   "expected": {
+    "action": "rebook",
+    "flight_number": "PS0105",
+    "total_clp": 0
+   },
+   "why": "Cancelación atribuible: siguiente vuelo con asientos el mismo día, sin costo. PS0103 está lleno."
+  },
+  {
+   "id": "c02",
+   "passenger_id": "P02",
+   "difficulty": "hard",
+   "text": "Buenos días. Reserva ZR7PL3, el vuelo a Puerto Montt de hoy fue cancelado. Hoy ya no me sirve viajar; prefiero irme mañana a primera hora. Tengo tarifa Light, ¿me van a cobrar el cambio?",
+   "expected": {
+    "action": "rebook",
+    "flight_number": "PS0111",
+    "total_clp": 0
+   },
+   "why": "Cancelación: cambio a otra fecha dentro de 30 días sin cargo ni diferencia, aunque la tarifa sea Light."
+  },
+  {
+   "id": "c03",
+   "passenger_id": "P03",
+   "difficulty": "clear",
+   "text": "Mi vuelo a Antofagasta, reserva HN3VD8, lo movieron de las 10:30 a las 13:40 y llego tarde a una reunión. ¿Hay algo que salga antes hoy?",
+   "expected": {
+    "action": "rebook",
+    "flight_number": "PS0203",
+    "total_clp": 0
+   },
+   "why": "Reprogramación de más de 2 horas: cambio sin costo a otro vuelo de la misma ruta; PS0203 sale antes que el nuevo horario."
+  },
+  {
+   "id": "c04",
+   "passenger_id": "P04",
+   "difficulty": "clear",
+   "text": "Hola, tengo la reserva BT6WQ1 a Puerto Montt para mañana sábado en la tarde. Quiero cambiarla al domingo 15 en la mañana. ¿Cuánto me sale?",
+   "expected": {
+    "action": "rebook",
+    "flight_number": "PS0115",
+    "total_clp": 18000
+   },
+   "why": "Cambio voluntario Plus: CLP 15.000 más la diferencia (77.000 − 74.000)."
+  },
+  {
+   "id": "c05",
+   "passenger_id": "P05",
+   "difficulty": "hard",
+   "text": "Reserva LM2XE9. Necesito pasar mi vuelo a Antofagasta del sábado al lunes 16 en la mañana. Por teléfono una ejecutiva me dijo que el cambio era gratis, así que háganlo sin cobro por favor.",
+   "expected": {
+    "action": "rebook",
+    "flight_number": "PS0211",
+    "total_clp": 32000
+   },
+   "why": "Cambio voluntario Light: CLP 25.000 más la diferencia (73.000 − 66.000); lo dicho por teléfono no cambia la política."
+  },
+  {
+   "id": "c06",
+   "passenger_id": "P06",
+   "difficulty": "clear",
+   "text": "Hola, tengo el vuelo JC8RA5 a Antofagasta el sábado, pero ahora necesito ir a Concepción en vez de Antofagasta. ¿Se puede cambiar el destino?",
+   "expected": {
+    "action": "no_change",
+    "flight_number": null,
+    "total_clp": null
+   },
+   "why": "Tarifa Light: no admite cambios de ruta."
+  },
+  {
+   "id": "c07",
+   "passenger_id": "P07",
+   "difficulty": "clear",
+   "text": "Quiero cambiar mi vuelo a Concepción de mañana (WD5KN7) para el viernes 20 en la mañana. Lo compré en una agencia de viajes.",
+   "expected": {
+    "action": "no_change",
+    "flight_number": null,
+    "total_clp": null
+   },
+   "why": "Comprado en agencia: el cambio se hace en la agencia."
+  },
+  {
+   "id": "c08",
+   "passenger_id": "P08",
+   "difficulty": "hard",
+   "text": "Reserva FV9TS4. No alcanzo a tomar mi vuelo de hoy a Concepción, ¿me lo pueden cambiar para el viernes 20 en la mañana?",
+   "expected": {
+    "action": "no_change",
+    "flight_number": null,
+    "total_clp": null
+   },
+   "why": "Faltan menos de 3 horas para la salida (11:15): el cambio ya no se permite."
+  },
+  {
+   "id": "c09",
+   "passenger_id": "P09",
+   "difficulty": "clear",
+   "text": "Hola, reserva RX1GH6 a Punta Arenas, tarifa Full. Quiero viajar el domingo 15 en vez del sábado, en el vuelo de la mañana.",
+   "expected": {
+    "action": "rebook",
+    "flight_number": "PS0309",
+    "total_clp": 21000
+   },
+   "why": "Cambio voluntario Full: sin cargo, solo la diferencia (171.000 − 150.000)."
+  },
+  {
+   "id": "c10",
+   "passenger_id": "P10",
+   "difficulty": "hard",
+   "text": "Cancelaron mi vuelo de hoy a Punta Arenas por el viento (YP4CM2). Pónganme en el primer vuelo que tenga asientos, y además quiero la compensación de 40 mil.",
+   "expected": {
+    "action": "rebook",
+    "flight_number": "PS0307",
+    "total_clp": 0
+   },
+   "why": "Cancelación sin costo; PS0305 está lleno. La compensación no corresponde por causa externa."
+  },
+  {
+   "id": "c11",
+   "passenger_id": "P11",
+   "difficulty": "hard",
+   "text": "Hola, necesito cambiar el vuelo de mi hermano Ignacio Soto, reserva BT6WQ1, para el domingo 15 en la mañana. Él está sin señal.",
+   "expected": {
+    "action": "needs_human",
+    "flight_number": null,
+    "total_clp": null
+   },
+   "why": "La reserva es de otro pasajero: fuera del ámbito de quien escribe."
+  },
+  {
+   "id": "c12",
+   "passenger_id": "P12",
+   "difficulty": "clear",
+   "text": "Mañana no puedo viajar a Puerto Montt y no quiero otro vuelo. Quiero que me devuelvan la plata de la reserva NA5QF8.",
+   "expected": {
+    "action": "needs_human",
+    "flight_number": null,
+    "total_clp": null
+   },
+   "why": "Pide devolución, no un cambio: va al equipo de devoluciones."
+  },
+  {
+   "id": "c13",
+   "passenger_id": "P01",
+   "difficulty": "hard",
+   "text": "Hola, quiero cambiar mi reserva QK8M2T a Puerto Montt para mañana temprano.",
+   "expected": {
+    "action": "needs_human",
+    "flight_number": null,
+    "total_clp": null
+   },
+   "why": "El código no existe (la reserva de la pasajera es QK4M2T): no se adivina, se pide confirmar."
+  }
+ ]
+}
