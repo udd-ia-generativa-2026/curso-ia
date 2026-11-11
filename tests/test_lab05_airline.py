@@ -79,3 +79,21 @@ async def test_simulated_agent_stops_for_approval(tmp_path):
     kinds = [step["kind"] for step in trace]
     assert kinds[0] == "input" and kinds[-1] == "output" and "approval_requested" in kinds
     assert [s["tool"] for s in trace if s["kind"] == "tool"] == ["get_booking", "search_flights", "quote_change"]
+
+
+def test_trace_has_one_line_per_execution(tmp_path):
+    import json
+
+    from curso_ia.airline import save_trace
+
+    rows = [{"run_id": "r1", "utc_time": "2026-11-13T12:00:00+00:00", "system": "agent", "ambito": "P01",
+             "mode": "simulated", "model": "curso:course-chat", "action": "needs_human", "reason": "not_your_booking"}]
+    trace = [{"run_id": "r1", "kind": "input", "text": "hola", "step": 1},
+             {"run_id": "r1", "kind": "tool", "tool": "get_booking", "args": {"booking_code": "X"},
+              "result": {"error": "not_your_booking"}, "duration_ms": 0.1, "step": 2},
+             {"run_id": "r1", "kind": "output", "step": 3}]
+    path = save_trace(tmp_path / "trace.jsonl", rows, trace)
+    [record] = [json.loads(line) for line in path.read_text().splitlines()]
+    assert record["endpoint"] == "lab05/agent" and record["ambito"] == "P01" and record["input"] == "hola"
+    assert record["needs_human"] and record["needs_human_reason"] == "not_your_booking"
+    assert [s["tool"] for s in record["steps"]] == ["get_booking"]

@@ -220,6 +220,7 @@ async def run_cases(
         airline = Airline(case["passenger_id"])
         run_id = uuid.uuid4().hex[:10]
         row = {"run_id": run_id, "system": name, "model": ref, "mode": config.mode, "case": case["id"],
+               "ambito": case["passenger_id"],
                "expected": case["expected"]["action"], "status": "error", "action": None,
                "utc_time": datetime.now(timezone.utc).isoformat(timespec="seconds")}
         messages: list = []
@@ -345,14 +346,47 @@ def show_trace(trace: list[dict], run_id: str) -> None:
             print(f"{step['step']:>2}. Resultado: {_short({k: v for k, v in step.items() if k in ('status', 'action', 'flight_number', 'error_type') and v})}")
 
 
-def save_trace(path: Path, trace: list[dict]) -> Path:
-    """Guardar la traza en JSONL: una línea por paso, con `run_id` para agrupar cada ejecución."""
+def save_trace(path: Path, rows: list[dict], trace: list[dict]) -> Path:
+    """Guardar la traza en JSONL con el formato del curso (P24): una línea por ejecución, con sus pasos.
+
+    Cada línea trae `run_id`, fecha UTC, sistema, ámbito, modelo, entrada, pasos (herramienta, argumentos,
+    resultado resumido y aprobación), salida, tokens, costo con su fuente, latencia, `needs_human` y error.
+    """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
+    steps_by_run: dict[str, list[dict]] = {}
+    for step in trace:
+        steps_by_run.setdefault(step["run_id"], []).append(step)
     with path.open("w", encoding="utf-8") as file:
-        for step in trace:
-            file.write(json.dumps(step, ensure_ascii=False, default=str) + "\n")
+        for row in rows:
+            steps = steps_by_run.get(row["run_id"], [])
+            record = {
+                "run_id": row["run_id"], "utc_time": row["utc_time"], "endpoint": f"lab05/{row['system']}",
+                "ambito": row.get("ambito"), "mode": row["mode"], "models": {"generation": row["model"]},
+                "input": next((s["text"] for s in steps if s["kind"] == "input"), None),
+                "steps": [_summary(s) for s in steps if s["kind"] not in ("input", "output")],
+                "output": {k: row.get(k) for k in ("action", "flight_number", "booking_code", "reason", "reply")},
+                "input_tokens": row.get("input_tokens"), "output_tokens": row.get("output_tokens"),
+                "estimated_cost_usd": row.get("estimated_cost_usd"), "price_source": row.get("price_source"),
+                "price_date": row.get("price_date"), "latency_ms": row.get("latency_ms"),
+                "needs_human": row.get("action") == "needs_human",
+                "needs_human_reason": row.get("reason") if row.get("action") == "needs_human" else None,
+                "error": row.get("error_type"),
+            }
+            file.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
     return path
+
+
+def _summary(step: dict) -> dict:
+    """Un paso con el resultado resumido, para que la línea de la ejecución siga siendo legible."""
+    summary = {k: v for k, v in step.items() if k not in ("run_id", "system", "model", "case", "result", "text")}
+    if "result" in step:
+        summary["result"] = _short(step["result"], 300)
+    if step["kind"] == "approval_requested":
+        summary["approval"] = "pending"
+    if step["kind"] == "model" and step.get("text"):
+        summary["text"] = step["text"]
+    return summary
 
 
 def _args(args: dict | None) -> str:

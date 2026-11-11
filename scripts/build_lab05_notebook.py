@@ -458,7 +458,7 @@ display(pd.DataFrame(own_rows)[["system", "case", "expected", "action", "flight_
 md("""
 ## 10. Guardar la evidencia y decidir
 
-Guardamos una fila por caso y sistema en `results.csv`, todos los pasos en `trace.jsonl` y, en `experiment.json`, el modelo, las instrucciones, los esquemas, la predicción, la política, los casos propios y sus decisiones. Con la traza, otra persona puede revisar qué hizo cada sistema sin volver a consultar al modelo.
+Guardamos una fila por caso y sistema en `results.csv`, una línea por ejecución en `trace.jsonl`, con todos sus pasos (el formato de `GET /trace/{id}` del proyecto) y, en `experiment.json`, el modelo, las instrucciones, los esquemas, la predicción, la política, los casos propios y sus decisiones. Con la traza, otra persona puede revisar qué hizo cada sistema sin volver a consultar al modelo.
 
 Completa `DECISIONS`: cada respuesta es texto libre, de dos a cuatro oraciones, con cifras y casos concretos.
 
@@ -490,7 +490,7 @@ DECISIONS = {
 
 OUTPUT.mkdir(parents=True, exist_ok=True)
 pd.DataFrame(flow_rows + agent_rows + own_rows).to_csv(OUTPUT / "results.csv", index=False)
-save_trace(OUTPUT / "trace.jsonl", trace + own_trace)
+save_trace(OUTPUT / "trace.jsonl", flow_rows + agent_rows + own_rows, trace + own_trace)
 payload = {
     "model": model_ref,
     "instructions": {"agent": INSTRUCTIONS, "reader": READER_INSTRUCTIONS},
