@@ -12,8 +12,13 @@ TIMEOUT_S = 40.0
 SIMULATED_RESPONSE = "Respuesta simulada para comprobar el circuito; no proviene de ningún modelo."
 
 
-def create_model(ref: str, config: Config, *, simulated_output: dict | None = None) -> Model:
+def create_model(
+    ref: str, config: Config, *, simulated_output: dict | None = None, structured_output: str = "native",
+) -> Model:
     """Resolver el proveedor; `simulated_output` solo interviene en modo simulado.
+
+    `structured_output` fija cómo pide la salida tipada al servidor del curso: `native` (esquema JSON, laboratorios
+    2 a 4) o `tool` (como herramienta, para agentes que también llaman herramientas, laboratorio 5).
 
     `curso:` usa el servidor del curso; `google:` usa Gemini; el resto, la clave propia del estudiante.
     """
@@ -42,7 +47,7 @@ def create_model(ref: str, config: Config, *, simulated_output: dict | None = No
         course = OpenAIProvider(openai_client=client)
         # Salida tipada nativa: vLLM restringe la respuesta al esquema JSON. Con la llamada a herramienta,
         # el modelo del servidor a veces respondía en texto o inventaba campos (laboratorio 2, 22/10/2026).
-        profile = {**course.model_profile(name), "default_structured_output_mode": "native"}
+        profile = {**course.model_profile(name), "default_structured_output_mode": structured_output}
         return OpenAIChatModel(name, provider=course, profile=profile)
     if prov == "google":
         from google.genai.types import HttpRetryOptions

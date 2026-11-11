@@ -12,6 +12,8 @@ Laboratorio 3: [![Abrir en Colab](https://colab.research.google.com/assets/colab
 
 Laboratorio 4: [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/lab04/notebooks/lab04.ipynb)
 
+Laboratorio 5: [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/lab05/notebooks/lab05.ipynb)
+
 Hito 1, línea base (apoyo opcional): [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/hito1/notebooks/hito1.ipynb)
 
 La primera celda de cada notebook instala el paquete:
@@ -65,6 +67,14 @@ d1-2B se usa en clase con `d1:curso`, en `/d1` del servidor del curso con la cla
 El esquema usa un `Literal` con las rutas y las reglas en `instructions`, y no un `Enum` con una descripción por opción: con estos 80 casos, d1-2B acertó 75 así y entre 62 y 72 con descripciones (prueba del 06/11/2026). En un notebook, `UseEnumMemberDocstrings` pierde las descripciones sin avisar; `Choices` las conserva. Con `llama-server`, PydanticAI 2.55 rechaza las rúbricas, porque `llama-server` redondea `score` al entero.
 
 Comprobaciones: `uv run pytest`; el notebook corre completo en modo simulado sin claves ni modelo de decisión.
+
+## Laboratorio 5 · Flujo definido frente a agente, con aprobación humana y trazas
+
+El notebook `notebooks/lab05.ipynb` resuelve 13 solicitudes sintéticas de cambio de vuelo de Pacífico Sur de dos maneras: como flujo definido, donde el modelo solo lee el mensaje con salida tipada y el código hace los pasos, y como agente de PydanticAI, que elige entre cuatro herramientas (`get_booking`, `search_flights`, `quote_change` y `rebook`). `rebook` es la herramienta con efecto: se declara con `requires_approval=True` y la ejecución se detiene en `DeferredToolRequests` hasta que una persona apruebe o rechace; `get_booking` solo devuelve reservas del pasajero que escribe (el ámbito); `UsageLimits` corta el agente a las 10 solicitudes o 10 llamadas. Compara aciertos, solicitudes, tokens, latencia, costo y aprobaciones, y guarda `results.csv`, `trace.jsonl` (un paso por línea) y `experiment.json` en `labs/lab05-agent/`. Deja visibles las herramientas, las instrucciones, el flujo, el agente, la aprobación y la comparación; `curso_ia.airline` aporta los datos, las reglas de cambio en código, la ejecución medida, las trazas y un guion simulado. Las extensiones agregan una herramienta de recuperación con citas sobre las políticas del laboratorio 3 y las mismas herramientas por MCP (extra `lab05`).
+
+El modelo es `curso:course-chat` en clase (Gemma 4 26B-A4B en el servidor del curso; la salida tipada va como herramienta, porque el agente llama herramientas en la misma respuesta) y `google:gemini-3.5-flash-lite` fuera de ella. Los datos se regeneran con `scripts/generate_lab05.py` y el notebook con `scripts/build_lab05_notebook.py`.
+
+Comprobaciones: `uv run pytest`; `uv run python scripts/check_lab05.py` ejecuta el notebook completo en modo simulado, y con `--model curso:course-chat --copies 6` (con `CURSO_BASE_URL` y `CURSO_API_KEY` en el entorno) lo ejecuta contra el servidor como seis equipos a la vez.
 
 ## Hito 1 · Línea base, apoyo opcional
 
