@@ -120,7 +120,19 @@ airline_data = load_airline()
 cases = airline_data["cases"]
 gold = pd.DataFrame([{"id": c["id"], "passenger_id": c["passenger_id"], "difficulty": c["difficulty"],
                       **c["expected"], "why": c["why"]} for c in cases]).set_index("id")
-display(gold)
+
+# Cada caso en su bloque, con el mensaje completo y lo que el sistema debería proponer.
+for c in cases:
+    expected = c["expected"]
+    proposal = expected["action"]
+    if expected["flight_number"]:
+        amount = f"{expected['total_clp']:,}".replace(",", ".")
+        proposal += f" a {expected['flight_number']}, CLP {amount}"
+    print(f"{c['id']} · pasajero {c['passenger_id']} · {c['difficulty']}")
+    print(f"  Mensaje: {c['text']}")
+    print(f"  Esperado: {proposal}")
+    print(f"  Por qué: {c['why']}")
+    print()
 ''')
 
 code('''
@@ -349,8 +361,8 @@ else:
 ''')
 
 code('''
-APPROVE = True  # @param {type: "boolean"}
-DENY_REASON = "El monto no coincide con lo informado por teléfono; derivar a atención al cliente."  # @param {type: "string"}
+APPROVE = True  # True aprueba el cambio; False lo rechaza
+DENY_REASON = "El monto no coincide con lo informado por teléfono; derivar a atención al cliente."  # solo si rechazan
 
 if isinstance(first.output, DeferredToolRequests):
     decisions = DeferredToolResults(approvals={
