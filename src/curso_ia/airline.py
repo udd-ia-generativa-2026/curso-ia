@@ -289,10 +289,16 @@ def build_trace(text: str, messages: list, calls: list[dict], row: dict) -> list
     steps: list[dict[str, Any]] = [{"kind": "input", "text": text}]
     pending = list(calls)
     answered: set[str] = set()
+    retried: set[str] = set()  # llamadas que PydanticAI rechazó, por ejemplo por no cumplir el esquema
+    call_args: dict[str, dict] = {}
     for message in messages:
         for part in message.parts:
             if isinstance(part, ToolReturnPart):
                 answered.add(part.tool_call_id)
+            elif isinstance(part, RetryPromptPart) and part.tool_name:
+                retried.add(part.tool_call_id)
+            elif isinstance(part, ToolCallPart):
+                call_args[part.tool_call_id] = part.args_as_dict()
     for message in messages:
         if isinstance(message, ModelResponse):
             requested = [p for p in message.parts if isinstance(p, ToolCallPart)]
@@ -303,7 +309,7 @@ def build_trace(text: str, messages: list, calls: list[dict], row: dict) -> list
             for part in requested:
                 if part.tool_name.startswith("final_result"):
                     steps.append({"kind": "output_tool", "tool": part.tool_name, "args": part.args_as_dict()})
-                elif part.tool_call_id not in answered:
+                elif part.tool_call_id not in answered and part.tool_call_id not in retried:
                     steps.append({"kind": "approval_requested", "tool": part.tool_name, "args": part.args_as_dict()})
         else:
             for part in message.parts:
@@ -316,7 +322,8 @@ def build_trace(text: str, messages: list, calls: list[dict], row: dict) -> list
                         steps.append({"kind": "tool", "tool": part.tool_name, "args": None, "result": part.content,
                                       "duration_ms": None})
                 elif isinstance(part, RetryPromptPart):
-                    steps.append({"kind": "retry", "tool": part.tool_name, "text": str(part.content)[:300]})
+                    steps.append({"kind": "retry", "tool": part.tool_name, "args": call_args.get(part.tool_call_id),
+                                  "text": str(part.content)[:300]})
     # En el flujo, el código llama a las herramientas después de leer el mensaje.
     steps.extend({"kind": "tool", **call} for call in pending)
     steps.append({"kind": "output", **{k: row.get(k) for k in ("status", "action", "flight_number", "reason", "error_type")}})
@@ -340,6 +347,9 @@ def show_trace(trace: list[dict], run_id: str) -> None:
             print(f"{step['step']:>2}. Pide aprobación: {step['tool']}({_args(step['args'])})")
         elif kind == "output_tool":
             print(f"{step['step']:>2}. Salida tipada del modelo: {_short(step['args'])}")
+        elif kind == "retry" and step.get("tool"):
+            print(f"{step['step']:>2}. PydanticAI rechazó {step['tool']}({_args(step.get('args'))}) y pidió corregirla: "
+                  f"{_short(step['text'])}")
         elif kind == "retry":
             print(f"{step['step']:>2}. Reintento pedido por PydanticAI: {step['text']}")
         elif kind == "output":

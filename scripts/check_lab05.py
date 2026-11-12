@@ -4,7 +4,8 @@
 Sin argumentos usa el modo simulado: comprueba el circuito, no mide a ningún proveedor.
 Con `--model curso:course-chat` (y CURSO_BASE_URL y CURSO_API_KEY en el entorno) o
 `--model google:gemini-3.5-flash-lite` (con GOOGLE_API_KEY) consulta el modelo real; `--copies N` ejecuta
-N notebooks a la vez, como N equipos en clase. Deja cada notebook ejecutado en `runs/lab05-check/`.
+N notebooks a la vez, como N equipos en clase. Deja cada notebook ejecutado en `runs/lab05-check/`, con sus
+productos (`results.csv`, `trace.jsonl` y `experiment.json`) en una carpeta del mismo nombre.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ import argparse
 import asyncio
 import json
 import os
+import shutil
 import tempfile
 from pathlib import Path
 from time import perf_counter
@@ -51,7 +53,10 @@ async def execute(index: int, mode: str, model: str, out: Path) -> dict:
         elapsed = perf_counter() - start
         name = f"lab05-{mode}-{model.replace(':', '_').replace('/', '_')}-{index}.ipynb"
         nbformat.write(notebook, out / name)
-        results = env_dir / "labs/lab05-agent/results.csv"
+        products = env_dir / "labs/lab05-agent"
+        if products.exists():  # results.csv, trace.jsonl y experiment.json junto al notebook
+            shutil.copytree(products, out / Path(name).stem, dirs_exist_ok=True)
+        results = products / "results.csv"
         summary = None
         if results.exists():
             import pandas as pd

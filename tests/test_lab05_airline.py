@@ -97,3 +97,35 @@ def test_trace_has_one_line_per_execution(tmp_path):
     assert record["endpoint"] == "lab05/agent" and record["ambito"] == "P01" and record["input"] == "hola"
     assert record["needs_human"] and record["needs_human_reason"] == "not_your_booking"
     assert [s["tool"] for s in record["steps"]] == ["get_booking"]
+
+
+async def test_invalid_tool_call_is_a_retry_not_an_approval():
+    """Una llamada que no cumple el esquema se registra como reintento, no como aprobación pendiente."""
+    from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart
+    from pydantic_ai.models.function import FunctionModel
+
+    from curso_ia.airline import build_trace
+
+    def script(messages, info):
+        turn = sum(isinstance(m, ModelResponse) for m in messages)
+        if turn == 0:
+            return ModelResponse(parts=[ToolCallPart("search_flights", {"date": "2026-11-13"})])
+        if turn == 1:
+            return ModelResponse(parts=[ToolCallPart("search_flights", {
+                "origin": "SCL", "destination": "ANF", "date": "2026-11-13"})])
+        return ModelResponse(parts=[TextPart("listo")])
+
+    agent = Agent(FunctionModel(script), deps_type=Airline)
+
+    @agent.tool
+    def search_flights(ctx: RunContext[Airline], origin: str, destination: str, date: str) -> dict:
+        return ctx.deps.search_flights(origin, destination, date)
+
+    airline = Airline("P03")
+    result = await agent.run("vuelos", deps=airline)
+    steps = build_trace("vuelos", result.all_messages(), airline.calls, {"status": "ok"})
+    kinds = [step["kind"] for step in steps]
+    assert "approval_requested" not in kinds
+    retry = next(step for step in steps if step["kind"] == "retry")
+    assert retry["tool"] == "search_flights" and retry["args"] == {"date": "2026-11-13"}
+    assert [step["tool"] for step in steps if step["kind"] == "tool"] == ["search_flights"]
