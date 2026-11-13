@@ -10,7 +10,7 @@ from curso_ia.airline import Airline, lab_model, load_airline, run_cases
 def test_expected_outcomes_follow_the_policy():
     """Cada caso esperado es coherente con las reglas en código: así la referencia no depende del modelo."""
     data = load_airline()
-    assert len({case["id"] for case in data["cases"]}) == len(data["cases"]) == 13
+    assert [case["id"] for case in data["cases"]] == [f"c{i:02d}" for i in range(1, 16)]
     for case in data["cases"]:
         airline = Airline(case["passenger_id"])
         code = re.search(r"\b[A-Z0-9]{6}\b", case["text"]).group()
@@ -18,8 +18,23 @@ def test_expected_outcomes_follow_the_policy():
         if expected["action"] == "rebook":
             quote = airline.quote_change(code, expected["flight_number"])
             assert quote["allowed"] and quote["total_clp"] == expected["total_clp"], case["id"]
-        elif expected["action"] == "needs_human":
+        elif expected["action"] == "needs_human" and case["id"] != "c15":
             assert "error" in airline.get_booking(code) or "devuelvan" in case["text"], case["id"]
+
+
+def test_budget_alternative_and_date_conflict_have_verifiable_references():
+    """Los nuevos casos tienen referencias verificables, sin elegir una fecha ambigua arbitrariamente."""
+    from datetime import date
+
+    data = load_airline()
+    assert "challenge_cases" not in data
+    airline = Airline("P04")
+    assert airline.quote_change("BT6WQ1", "PS0115")["total_clp"] == 18000
+    assert airline.quote_change("BT6WQ1", "PS0117")["total_clp"] == 15000
+    assert data["cases"][13]["expected"]["flight_number"] == "PS0117"
+    assert date(2026, 11, 15).weekday() == 6 and date(2026, 11, 16).weekday() == 0
+    assert "No elijas una fecha por mí" in data["cases"][14]["text"]
+    assert data["cases"][14]["expected"]["action"] == "needs_human"
 
 
 @pytest.mark.parametrize(("passenger", "code", "flight", "reason"), [
@@ -159,3 +174,14 @@ async def test_failed_typed_output_keeps_messages_retries_and_usage(tmp_path):
     assert row["requests"] == 2 and row["input_tokens"] == 20 and row["output_tokens"] == 10
     assert any(step["kind"] == "model" and "¿Domingo 15" in step["text"] for step in trace)
     assert any(step["kind"] == "retry" for step in trace)
+
+
+async def test_free_query_is_recorded_without_inventing_a_reference(tmp_path):
+    async def run_free_query(text, airline):
+        return {"action": "needs_human", "reply": "Confirma la fecha."}, []
+
+    config = load_config(tmp_path, env={"CURSO_MODE": "simulated"})
+    rows, _ = await run_cases(run_free_query, [{"id": "q01", "passenger_id": "P04", "text": "¿Qué fecha?"}],
+                               name="flow", ref="curso:course-chat", config=config)
+    assert rows[0]["status"] == "ok" and rows[0]["reply"] == "Confirma la fecha."
+    assert rows[0]["expected"] is None and rows[0]["correct"] is None and rows[0]["action_ok"] is None

@@ -188,9 +188,10 @@ System = Callable[[str, Airline], Awaitable[tuple[dict, list]]]
 
 def score(case: dict, outcome: dict, airline: Airline) -> dict:
     """Comparar con lo esperado: la acción y, si es un cambio, el vuelo; el monto lo calcula la política."""
-    expected = case["expected"]
-    action_ok = outcome.get("action") == expected["action"]
-    correct = action_ok and (expected["action"] != "rebook" or outcome.get("flight_number") == expected["flight_number"])
+    expected = case.get("expected")
+    action_ok = outcome.get("action") == expected["action"] if expected else None
+    correct = (action_ok and (expected["action"] != "rebook"
+                             or outcome.get("flight_number") == expected["flight_number"])) if expected else None
     total = None
     if outcome.get("action") == "rebook" and outcome.get("booking_code") and outcome.get("flight_number"):
         total = Airline(airline.passenger_id, data=airline.data).quote_change(
@@ -207,6 +208,7 @@ async def run_cases(
     `needs_human`. Cada caso parte de una copia nueva de los datos, con el pasajero del caso como ámbito.
     `wait_s` espacia los casos para respetar el límite por minuto del nivel gratuito de Gemini.
     Un fallo, incluido superar el límite de solicitudes, queda como fila con `status = "error"`.
+    Si el caso no tiene `expected` (consulta libre), no se calcula acierto: `correct` y `action_ok` quedan en None.
     """
     from pydantic_ai import capture_run_messages
     from pydantic_ai.usage import RunUsage
@@ -222,7 +224,7 @@ async def run_cases(
         run_id = uuid.uuid4().hex[:10]
         row = {"run_id": run_id, "system": name, "model": ref, "mode": config.mode, "case": case["id"],
                "ambito": case["passenger_id"],
-               "expected": case["expected"]["action"], "status": "error", "action": None,
+               "expected": (case.get("expected") or {}).get("action"), "status": "error", "action": None,
                "utc_time": datetime.now(timezone.utc).isoformat(timespec="seconds")}
         messages: list = []
         start = perf_counter()
@@ -235,7 +237,8 @@ async def run_cases(
                 row.update(score(case, outcome, airline))
             except Exception as error:
                 row.update(error_type=type(error).__name__, error=redact(str(error)[:200], config.secrets()),
-                           action_ok=False, correct=False)
+                           action_ok=False if case.get("expected") else None,
+                           correct=False if case.get("expected") else None)
                 messages = getattr(error, "messages", None) or captured or messages
         latency = round((perf_counter() - start) * 1000)
         usage = RunUsage()

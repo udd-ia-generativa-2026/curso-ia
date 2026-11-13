@@ -2,6 +2,7 @@
 
 import ast
 from copy import deepcopy
+from datetime import date, datetime, timedelta
 import inspect
 import json
 from pathlib import Path
@@ -90,3 +91,23 @@ async def test_policy_extension_keeps_approval_and_does_not_modify_base_agent():
         result = await namespace[name].run("Cambio", deps=airline)
         assert isinstance(result.output, DeferredToolRequests) and airline.changes == []
         assert ("search_policies" in offered_tools[-1]) == (name == "policy_agent")
+
+
+async def test_flow_replies_from_a_template_without_another_model_request():
+    """La propuesta y su monto se redactan en código y no confirman ni ejecutan el cambio."""
+    requests = []
+
+    def respond(messages, info):
+        requests.append(messages)
+        return ModelResponse(parts=[ToolCallPart(info.output_tools[0].name, {
+            "booking_code": "BT6WQ1", "intent": "change_flight", "new_destination": None,
+            "desired_date": "2026-11-15", "time_of_day": "morning"})])
+
+    namespace = {"BaseModel": BaseModel, "Field": Field, "Literal": Literal, "date": date,
+                 "datetime": datetime, "timedelta": timedelta, "Agent": Agent, "model": FunctionModel(respond)}
+    exec(tagged("flow-definition"), namespace)
+    airline = Airline("P04")
+    outcome, messages = await namespace["run_flow"]("Cambio al domingo por la mañana", airline)
+    assert outcome["action"] == "rebook" and outcome["flight_number"] == "PS0115"
+    assert "18.000" in outcome["reply"] and "pendiente de aprobación" in outcome["reply"]
+    assert airline.changes == [] and len(requests) == 1
