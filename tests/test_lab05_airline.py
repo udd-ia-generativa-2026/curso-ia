@@ -129,3 +129,33 @@ async def test_invalid_tool_call_is_a_retry_not_an_approval():
     retry = next(step for step in steps if step["kind"] == "retry")
     assert retry["tool"] == "search_flights" and retry["args"] == {"date": "2026-11-13"}
     assert [step["tool"] for step in steps if step["kind"] == "tool"] == ["search_flights"]
+
+
+async def test_failed_typed_output_keeps_messages_retries_and_usage(tmp_path):
+    """Si el modelo pregunta en texto en vez de entregar el esquema, la falla debe poder leerse en la traza."""
+    from pydantic import BaseModel
+    from pydantic_ai.messages import ModelResponse, TextPart
+    from pydantic_ai.models.function import FunctionModel
+    from pydantic_ai.usage import RequestUsage
+
+    class Resolution(BaseModel):
+        action: str
+
+    def respond(messages, info):
+        return ModelResponse(parts=[TextPart("¿Domingo 15 o lunes 16?")],
+                             usage=RequestUsage(input_tokens=10, output_tokens=5))
+
+    agent = Agent(FunctionModel(respond), output_type=Resolution)
+
+    async def run_agent(text, airline):
+        result = await agent.run(text)
+        return {"action": result.output.action}, result.all_messages()
+
+    config = load_config(tmp_path, env={"CURSO_MODE": "real"})
+    rows, trace = await run_cases(run_agent, [load_airline()["cases"][0]], name="agent",
+                                  ref="curso:course-chat", config=config)
+    [row] = rows
+    assert row["status"] == "error" and row["error_type"] == "UnexpectedModelBehavior"
+    assert row["requests"] == 2 and row["input_tokens"] == 20 and row["output_tokens"] == 10
+    assert any(step["kind"] == "model" and "¿Domingo 15" in step["text"] for step in trace)
+    assert any(step["kind"] == "retry" for step in trace)

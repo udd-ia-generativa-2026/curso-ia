@@ -134,12 +134,25 @@ CASES = [
 ]
 
 
+# Propuesta de contraste: se explora aparte y no cambia los 13 casos del banco base.
+CHALLENGE_CASES = [
+    {"id": "h01", "passenger_id": "P04", "difficulty": "hard",
+     "text": "Reserva BT6WQ1. Quiero viajar el domingo 15 a Puerto Montt; prefiero la mañana, pero mi tope total para el cambio es $15.000. Si la mañana supera ese monto, acepta el vuelo de las 19:50 del mismo domingo. Si ambos superan el tope, no propongas ningún cambio.",
+     "expected": {"action": "rebook", "flight_number": "PS0117", "total_clp": 15000},
+     "why": "La mañana (PS0115) cuesta CLP 18.000 y supera el tope. La alternativa explícita de las 19:50 (PS0117) cuesta CLP 15.000. El esquema del lector actual no representa presupuesto ni alternativas condicionales."},
+    {"id": "h02", "passenger_id": "P04", "difficulty": "hard",
+     "text": "Reserva BT6WQ1. Necesito pasar mi vuelo a Puerto Montt al lunes 15 de noviembre en la mañana. En mi agenda dice día 15, pero mi jefe menciona el lunes 16 y todavía no lo confirmamos. No elijas una fecha por mí: pregúntame cuál es antes de cotizar o proponer un cambio.",
+     "expected": {"action": "needs_human", "flight_number": None, "total_clp": None},
+     "why": "El 15 es domingo y el lunes es 16. No hay fecha confirmada y el pasajero pide aclararla antes de cotizar; needs_human representa esa aclaración. No se califica una fecha arbitraria como correcta."},
+]
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     data = {
         "name": "Laboratorio 5 · Cambios de vuelo de Pacífico Sur",
         "metadata": {"now": NOW, "cities": CITIES, "note": "Datos sintéticos de una aerolínea ficticia."},
-        "flights": FLIGHTS, "bookings": BOOKINGS, "cases": CASES,
+        "flights": FLIGHTS, "bookings": BOOKINGS, "cases": CASES, "challenge_cases": CHALLENGE_CASES,
     }
     path = OUT / "airline.json"
     path.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")

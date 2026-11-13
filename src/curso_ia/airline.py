@@ -208,6 +208,7 @@ async def run_cases(
     `wait_s` espacia los casos para respetar el límite por minuto del nivel gratuito de Gemini.
     Un fallo, incluido superar el límite de solicitudes, queda como fila con `status = "error"`.
     """
+    from pydantic_ai import capture_run_messages
     from pydantic_ai.usage import RunUsage
     from tqdm.auto import tqdm
 
@@ -225,15 +226,17 @@ async def run_cases(
                "utc_time": datetime.now(timezone.utc).isoformat(timespec="seconds")}
         messages: list = []
         start = perf_counter()
-        try:
-            outcome, messages = await asyncio.wait_for(system(case["text"], airline), TIMEOUT_S)
-            row.update(status="ok", **{k: v for k, v in outcome.items() if k in
-                                       ("action", "flight_number", "booking_code", "reason", "reply")})
-            row.update(score(case, outcome, airline))
-        except Exception as error:
-            row.update(error_type=type(error).__name__, error=redact(str(error)[:200], config.secrets()),
-                       action_ok=False, correct=False)
-            messages = getattr(error, "messages", messages) or messages
+        # Conservar también las respuestas y los reintentos cuando el agente termina con una excepción.
+        with capture_run_messages() as captured:
+            try:
+                outcome, messages = await asyncio.wait_for(system(case["text"], airline), TIMEOUT_S)
+                row.update(status="ok", **{k: v for k, v in outcome.items() if k in
+                                           ("action", "flight_number", "booking_code", "reason", "reply")})
+                row.update(score(case, outcome, airline))
+            except Exception as error:
+                row.update(error_type=type(error).__name__, error=redact(str(error)[:200], config.secrets()),
+                           action_ok=False, correct=False)
+                messages = getattr(error, "messages", None) or captured or messages
         latency = round((perf_counter() - start) * 1000)
         usage = RunUsage()
         for response in _responses(messages):
