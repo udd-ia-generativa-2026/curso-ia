@@ -8,7 +8,8 @@ import pytest
 
 from curso_ia import load_config
 from curso_ia.service import (
-    Project, check_project, create_app, keyword_search, markdown_chunks, run_adversarial, service_client,
+    CONTRACT_RULES, Project, check_project, create_app, keyword_search, markdown_chunks, run_adversarial,
+    service_client, write_contract_tests,
 )
 from curso_ia.service_example import Resolution, pacifico_sur
 
@@ -116,6 +117,19 @@ def test_keyword_search_returns_citable_chunks():
     chunks = markdown_chunks({"pol.md": "# Equipaje\n\nUna maleta de 23 kg por pasajero.\n\n## Mascotas\n\nPerros pequeños en cabina."})
     hits = keyword_search(chunks, "¿Puedo llevar mi perro pequeño?")
     assert hits[0]["source"] == "pol.md" and hits[0]["section"] == "Mascotas" and "Perros" in hits[0]["text"]
+
+
+async def test_contract_rules_are_added_to_every_project(app, client):
+    body = await start(client)
+    sent = app.state.service.runs[body["run_id"]].messages[0].instructions
+    assert pacifico_sur().instructions.strip() in sent and CONTRACT_RULES in sent
+
+
+def test_contract_tests_are_copied_from_the_package(tmp_path):
+    path = write_contract_tests(tmp_path)
+    assert path == tmp_path / "tests" / "test_contract.py"
+    path.write_text("modificado", encoding="utf-8")
+    assert "def test_unknown_scope_is_rejected" in write_contract_tests(tmp_path).read_text(encoding="utf-8")
 
 
 async def test_adversarial_cases_record_the_control_that_stopped_them(client):

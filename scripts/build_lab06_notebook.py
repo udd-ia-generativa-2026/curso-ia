@@ -1,8 +1,8 @@
 """Construir `notebooks/lab06.ipynb` y las plantillas del Hito 2 a partir de este archivo.
 
 Ejecutar con `uv run python scripts/build_lab06_notebook.py`. Editar aquí y volver a generar, no el JSON.
-Las plantillas `app.py` y `test_contract.py` quedan también en `src/curso_ia/data/lab06/` para los repositorios
-de equipo, con el mismo texto que escriben las celdas `%%writefile` del notebook.
+La plantilla `app.py` queda también en `src/curso_ia/data/lab06/`, con el mismo texto que escribe la celda
+`%%writefile` del notebook. `test_contract.py` vive solo ahí: el notebook lo copia con `write_contract_tests`.
 """
 
 from __future__ import annotations
@@ -54,6 +54,8 @@ MEMBERS = [
     {"member_id": "N-201", "ambito": "sede_norte", "name": "Javiera Soto", "plan": "anual", "status": "activo"},
 ]
 
+# Sus documentos: péguenlos aquí o léanlos de archivos. markdown_chunks los corta por párrafo y anota la sección
+# (el último título #) de cada fragmento, para que el agente pueda citar documento y sección.
 DOCUMENTS = {
     "reglamento.md": """# Congelamiento
 
@@ -267,8 +269,8 @@ import pandas as pd
 
 from curso_ia import load_config, save_experiment
 from curso_ia.config import missing
-from curso_ia.service import (CONTROLS, check_project, create_app, load_app, run_adversarial, service_client,
-                              show_record)
+from curso_ia.service import (CONTROLS, check_project, create_app, keyword_search, load_app, run_adversarial,
+                              service_client, show_record, write_contract_tests)
 from curso_ia.service_example import pacifico_sur
 
 MODE = "simulated"  # @param ["simulated", "real"]
@@ -356,18 +358,22 @@ show_record((await client.get(body["trace_url"])).json())
 md("""
 ## 4. Su proyecto
 
-La celda siguiente escribe `src/app.py` con una plantilla que ya funciona: un gimnasio ficticio con dos sedes. Reemplacen sus partes por las de su proyecto, pensando en su Hito 1:
+Hasta aquí el agente vivía en celdas del notebook. Un servicio tiene que poder correr sin el notebook: las pruebas del contrato lo importan, el 27/11 se evalúa este mismo servicio y en la defensa se levanta como servidor. Por eso su sistema pasa a un archivo, `src/app.py`, que es lo que va al repositorio del equipo.
+
+La celda siguiente escribe ese archivo con una plantilla que ya cumple el contrato: un gimnasio ficticio con dos sedes, de otro dominio a propósito, para que se vea qué parte cambia cada equipo. **Editen la celda, no el archivo**, y vuelvan a ejecutarla: Colab borra los archivos al cerrar la sesión, pero la celda queda guardada con su copia del notebook en Drive, y cada ejecución reescribe `src/app.py`.
+
+Reemplacen las partes de la plantilla por las de su proyecto, pensando en su Hito 1:
 
 | Parte de `app.py` | Qué poner de su proyecto |
 | --- | --- |
 | `AMBITOS` y los datos | Al menos dos ámbitos (tiendas, sedes, clientes, interno y público) y datos sintéticos que pertenezcan a cada uno |
 | `ScopedData` | Cómo se ven los datos desde un ámbito; las herramientas lo reciben en `ctx.deps` |
 | `tools` | Consultas sin efecto. Una puede ser su extracción del laboratorio 2 o un flujo propio |
-| `retrieval_tools` | Su recuperación con citas: el BM25 del Hito 1, el índice del laboratorio 3 o `keyword_search` |
+| `DOCUMENTS` y `retrieval_tools` | Sus documentos y la búsqueda en ellos, que devuelve cada fragmento con su fuente para citar. La plantilla usa `keyword_search` (más abajo); si su Hito 1 ya tiene una recuperación propia, pueden usarla en su lugar |
 | `effect_tools` | La acción de su sistema (un reembolso, un pedido, un registro), simulada; siempre espera aprobación |
 | `Answer` e `INSTRUCTIONS` | Su salida tipada y sus instrucciones |
 
-Editen la celda y vuelvan a ejecutarla: cada ejecución reemplaza el archivo. Después, la celda de comprobación les dice qué falta para cumplir el contrato.
+Después de cada cambio, la celda de comprobación les dice qué falta para cumplir el contrato.
 """)
 
 code("%%writefile src/app.py\n" + APP_TEMPLATE.strip("\n"))
@@ -379,6 +385,27 @@ print("Cumple el contrato." if not problems else "Falta:\\n- " + "\\n- ".join(pr
 team_client = service_client(team.app)
 schema = (await team_client.get("/schema")).json()
 display(pd.DataFrame(schema["tools"])[["name", "effect", "requires_approval", "citations", "description"]])
+''')
+
+md("""
+### La búsqueda de la plantilla: `keyword_search`
+
+En la clase de RAG buscamos por significado, con embeddings y un índice. `keyword_search` es más simple: no usa modelo ni índice y corre en cualquier parte.
+
+1. `markdown_chunks` corta cada documento por párrafos y anota la sección de cada fragmento (el último título `#`).
+2. `keyword_search` normaliza la pregunta y cada fragmento: minúsculas, sin tildes y solo palabras de más de 3 letras, recortadas a 5 letras («congelar» y «congelarse» quedan como «conge»).
+3. Cuenta cuántas palabras comparten y devuelve los 3 fragmentos con más coincidencias, con documento y sección para citar.
+
+Su límite: solo encuentra palabras escritas igual. «Pausar mi plan» no encuentra el párrafo del congelamiento, porque no comparten ninguna palabra. Prueben preguntas de su dominio: si su búsqueda no encuentra lo que debería, es un hallazgo para el 27/11, cuando pueden cambiar la recuperación y medir antes y después.
+""")
+
+code('''
+# Si cambiaron la recuperación, prueben aquí su herramienta en vez de keyword_search.
+for query in ["¿Se puede congelar un plan anual?", "Quiero pausar mi plan"]:
+    found = keyword_search(team.CHUNKS, query)
+    print(f"\\n{query} → {len(found)} fragmentos")
+    if found:
+        display(pd.DataFrame(found)[["score", "source", "section", "text"]])
 ''')
 
 md("""
@@ -412,12 +439,11 @@ else:
 md("""
 ## 5. Pruebas del contrato
 
-La celda escribe `tests/test_contract.py` y la ejecuta. Corre sin modelo ni red: un modelo de prueba llama a todas sus herramientas con argumentos de ejemplo. No miden si las respuestas son buenas (eso es el 27/11); comprueban que el servicio cumpla el contrato. No modifiquen este archivo.
+La celda copia `tests/test_contract.py` desde el paquete del curso y lo ejecuta. Es igual para todos los equipos y no se edita: si lo cambian, la celda lo vuelve a reemplazar. Corre sin modelo ni red (un modelo de prueba llama a todas sus herramientas con argumentos de ejemplo) y comprueba que el proyecto declare lo que pide el contrato, que `/schema` muestre al menos dos ámbitos, una herramienta con efecto y una que cita, que un ámbito no declarado se rechace, que una acción rechazada no se ejecute y que la traza tenga el formato del curso. No mide si las respuestas son buenas: eso es el 27/11.
 """)
 
-code("%%writefile tests/test_contract.py\n" + TEST_TEMPLATE.strip("\n"))
-
 code('''
+print("Pruebas copiadas en", write_contract_tests(ROOT).relative_to(ROOT))
 # Las pruebas corren aparte, en modo simulado y sin leer los Secretos de Colab.
 test_env = {key: value for key, value in os.environ.items() if key != "COLAB_RELEASE_TAG"}
 result = subprocess.run([sys.executable, "-m", "pytest", "-q", "tests/test_contract.py"], cwd=ROOT,
@@ -573,8 +599,7 @@ async def read_request(ctx: RunContext[ScopedData], message: str) -> dict:
     return result.output.model_dump()
 ```
 
-- **B. Su recuperación del Hito 1.** Reemplacen `keyword_search` por su BM25 o por el índice del laboratorio 3; devuelvan siempre la fuente de cada fragmento para que el agente cite.
-- **C. Correrlo como servidor.** En su computador, con el repositorio clonado: `uv run uvicorn src.app:app --reload` y abran `http://127.0.0.1:8000/docs` para probar los endpoints desde el navegador.
+- **B. Correrlo como servidor.** En su computador, con el repositorio clonado: `uv run uvicorn src.app:app --reload` y abran `http://127.0.0.1:8000/docs` para probar los endpoints desde el navegador.
 ''')
 
 

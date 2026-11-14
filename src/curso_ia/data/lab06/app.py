@@ -27,6 +27,8 @@ MEMBERS = [
     {"member_id": "N-201", "ambito": "sede_norte", "name": "Javiera Soto", "plan": "anual", "status": "activo"},
 ]
 
+# Sus documentos: péguenlos aquí o léanlos de archivos. markdown_chunks los corta por párrafo y anota la sección
+# (el último título #) de cada fragmento, para que el agente pueda citar documento y sección.
 DOCUMENTS = {
     "reglamento.md": """# Congelamiento
 

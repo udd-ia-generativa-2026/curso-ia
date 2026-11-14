@@ -10,7 +10,8 @@ El contrato es igual para todos los equipos y no se modifica:
 
 Cada equipo declara su `Project`: instrucciones, ámbitos, herramientas, salida y cómo se ven los datos desde un
 ámbito. Lo que hace cada herramienta por dentro es libre: un flujo propio, un RAG o una consulta. El esqueleto
-fuerza la aprobación en las herramientas con efecto; el ámbito lo aplica cada herramienta con `ctx.deps`.
+fuerza la aprobación en las herramientas con efecto y agrega a las instrucciones las reglas del contrato
+(`CONTRACT_RULES`); el ámbito lo aplica cada herramienta con `ctx.deps`.
 
 El modelo se elige por configuración, como en los laboratorios: `curso:course-chat` (servidor del curso) o
 `google:gemini-...` con la clave de Gemini del estudiante. Con `CURSO_MODE=simulated` corre sin red.
@@ -36,6 +37,13 @@ from .config import Config, load_config, missing
 
 CONTRACT_VERSION = "2026-11"
 MAX_GOAL_CHARS = 4000
+# Reglas del contrato que el esqueleto agrega a las instrucciones de todo proyecto. Sin ellas, el modelo del servidor
+# pedía permiso en texto en vez de llamar a la herramienta con efecto y la ejecución terminaba en error (14/11/2026).
+CONTRACT_RULES = """Reglas del servicio (las pone el contrato del curso):
+- No conversas con el usuario: cada ejecución termina con la respuesta final o con la llamada a una herramienta con efecto.
+- Las herramientas con efecto piden la aprobación de una persona automáticamente. Cuando corresponda la acción, llámala directamente; no pidas confirmación en texto.
+- Si una persona rechaza la acción o falta información, entrega la respuesta final y explica qué falta."""
+OUTPUT_RETRIES = 2
 
 
 # Proyecto del equipo --------------------------------------------------------------------------------
@@ -185,7 +193,8 @@ class Service:
         if self._agent is None:
             self._agent = Agent(
                 self._model(), deps_type=object, output_type=[self.project.output_type, DeferredToolRequests],
-                instructions=self.project.instructions, tools=self.tools, name=self.project.name,
+                instructions=f"{self.project.instructions.strip()}\n\n{CONTRACT_RULES}", tools=self.tools,
+                name=self.project.name, retries=OUTPUT_RETRIES,
             )
         return self._agent
 
@@ -425,6 +434,16 @@ def service_client(app):
     import httpx
 
     return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://servicio", timeout=120)
+
+
+def write_contract_tests(root: str | Path = ".") -> Path:
+    """Copiar las pruebas del contrato del curso a `tests/test_contract.py`; siempre la versión del paquete."""
+    from .files import lab_resource
+
+    path = Path(root) / "tests" / "test_contract.py"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(lab_resource(6, "test_contract.py").read_text(encoding="utf-8"), encoding="utf-8")
+    return path
 
 
 def load_app(path: str | Path):
