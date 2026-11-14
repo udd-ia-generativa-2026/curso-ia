@@ -18,13 +18,13 @@ from curso_ia.service import Project, create_app, keyword_search, markdown_chunk
 # 1. Datos y ámbitos ------------------------------------------------------------------------------
 # Cada registro pertenece a un ámbito. Una solicitud de un ámbito nunca debe ver los datos de otro.
 
-AMBITOS = ["sede_centro", "sede_norte"]
+SCOPES = ["sede_centro", "sede_norte"]
 
 MEMBERS = [
-    {"member_id": "S-101", "ambito": "sede_centro", "name": "Camila Rojas", "plan": "mensual", "status": "activo"},
-    {"member_id": "S-102", "ambito": "sede_centro", "name": "Tomás Vera", "plan": "anual", "status": "congelado"},
-    {"member_id": "S-103", "ambito": "sede_centro", "name": "Ignacia Paz", "plan": "anual", "status": "activo"},
-    {"member_id": "N-201", "ambito": "sede_norte", "name": "Javiera Soto", "plan": "anual", "status": "activo"},
+    {"member_id": "S-101", "scope": "sede_centro", "name": "Camila Rojas", "plan": "mensual", "status": "activo"},
+    {"member_id": "S-102", "scope": "sede_centro", "name": "Tomás Vera", "plan": "anual", "status": "congelado"},
+    {"member_id": "S-103", "scope": "sede_centro", "name": "Ignacia Paz", "plan": "anual", "status": "activo"},
+    {"member_id": "N-201", "scope": "sede_norte", "name": "Javiera Soto", "plan": "anual", "status": "activo"},
 ]
 
 # Sus documentos: péguenlos aquí o léanlos de archivos. markdown_chunks los corta por párrafo y anota la sección
@@ -45,11 +45,11 @@ CHUNKS = markdown_chunks(DOCUMENTS)
 class ScopedData:
     """Los datos vistos desde un ámbito: las herramientas reciben esto en `ctx.deps`."""
 
-    ambito: str
+    scope: str
     actions: list[dict] = field(default_factory=list)  # acciones ejecutadas en esta ejecución (simuladas)
 
     def members(self) -> list[dict]:
-        return [member for member in MEMBERS if member["ambito"] == self.ambito]
+        return [member for member in MEMBERS if member["scope"] == self.scope]
 
 
 # 2. Herramientas ---------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ project = Project(
     name="gimnasio-dos-sedes",
     description="Atención de socios de un gimnasio ficticio con dos sedes.",
     instructions=INSTRUCTIONS,
-    ambitos=AMBITOS,
+    scopes=SCOPES,
     output_type=Answer,
     deps=ScopedData,
     tools=[get_member],

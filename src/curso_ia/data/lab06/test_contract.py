@@ -31,20 +31,20 @@ def test_project_meets_the_contract():
 
 def test_schema_declares_scopes_effects_and_citations():
     schema = call("GET", "/schema")[0].json()
-    assert len(schema["ambitos"]) >= 2
+    assert len(schema["scopes"]) >= 2
     assert any(tool["effect"] and tool["requires_approval"] for tool in schema["tools"])
     assert any(tool["citations"] for tool in schema["tools"])
     assert all(not tool["effect"] or tool["requires_approval"] for tool in schema["tools"])
 
 
 def test_unknown_scope_is_rejected():
-    response, _ = call("POST", "/agent/run", {"goal": "hola", "ambito": "ambito-que-no-existe"})
+    response, _ = call("POST", "/agent/run", {"goal": "hola", "scope": "no-declarado"})
     assert response.status_code == 403
 
 
 def test_effect_waits_for_approval_and_a_denial_is_not_executed():
     app = create_app(PROJECT, config=load_config(env={"CURSO_MODE": "simulated"}), trace_path=None)
-    body = call("POST", "/agent/run", {"goal": "Prueba del contrato", "ambito": PROJECT.ambitos[0]}, app)[0].json()
+    body = call("POST", "/agent/run", {"goal": "Prueba del contrato", "scope": PROJECT.scopes[0]}, app)[0].json()
     assert body["status"] == "pending_approval", (
         f"Se esperaba una aprobación pendiente; error: {body['error']}. Si una herramienta falló con argumentos "
         "de prueba, que devuelva un dict con 'error' en vez de lanzar una excepción.")
@@ -57,8 +57,8 @@ def test_effect_waits_for_approval_and_a_denial_is_not_executed():
 
 def test_trace_has_the_course_format():
     app = create_app(PROJECT, config=load_config(env={"CURSO_MODE": "simulated"}), trace_path=None)
-    body = call("POST", "/agent/run", {"goal": "Prueba de traza", "ambito": PROJECT.ambitos[-1]}, app)[0].json()
+    body = call("POST", "/agent/run", {"goal": "Prueba de traza", "scope": PROJECT.scopes[-1]}, app)[0].json()
     record = call("GET", body["trace_url"], app=app)[0].json()
-    for key in ("run_id", "utc_time", "ambito", "models", "input", "steps", "output", "input_tokens",
+    for key in ("run_id", "utc_time", "scope", "models", "input", "steps", "output", "input_tokens",
                 "estimated_cost_usd", "latency_ms", "needs_human", "error"):
         assert key in record

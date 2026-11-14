@@ -68,12 +68,12 @@ def rebook(ctx: RunContext[Airline], booking_code: str, new_flight_number: str) 
 
 def pacifico_sur() -> Project:
     """El proyecto de ejemplo: cada pasajero es un ámbito y solo ve sus reservas."""
-    ambitos = sorted({booking["passenger_id"] for booking in load_airline()["bookings"]})
+    scopes = sorted({booking["passenger_id"] for booking in load_airline()["bookings"]})
     return Project(
         name="pacifico-sur",
         description="Cambios de vuelo de una aerolínea ficticia, con aprobación de un supervisor antes de cambiar.",
         instructions=INSTRUCTIONS,
-        ambitos=ambitos,
+        scopes=scopes,
         output_type=Resolution,
         deps=Airline,
         tools=[get_booking, search_flights, quote_change],

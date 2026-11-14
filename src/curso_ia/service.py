@@ -2,8 +2,10 @@
 
 El contrato es igual para todos los equipos y no se modifica:
 
-- `POST /agent/run`: un objetivo (`goal`) y un ámbito (`ambito`). Si el agente pide una herramienta con efecto,
+- `POST /agent/run`: un objetivo (`goal`) y un ámbito (`scope`). Si el agente pide una herramienta con efecto,
   la ejecución se detiene en `pending_approval`; se continúa con otra llamada que trae `run_id` y `decisions`.
+  Opcional: una consulta complementaria (`run_id` de una ejecución terminada y un `goal` nuevo) crea otra
+  ejecución con la conversación anterior, en el mismo ámbito; su traza apunta a la anterior con `parent_run_id`.
 - `GET /trace/{run_id}`: la traza de la ejecución, con el formato del laboratorio 5.
 - `GET /schema`: herramientas, cuáles tienen efecto y cuáles citan, ámbitos, salida, modelo y límites.
 - `GET /health`: estado, modo, modelo y lo que falta configurar (solo nombres, nunca valores).
@@ -30,7 +32,7 @@ from time import perf_counter
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from pydantic_ai import Agent, DeferredToolRequests, DeferredToolResults, Tool, ToolDenied
+from pydantic_ai import Agent, DeferredToolRequests, DeferredToolResults, TextOutput, Tool, ToolDenied
 from pydantic_ai.usage import RunUsage, UsageLimits
 
 from .config import Config, load_config, missing
@@ -40,10 +42,21 @@ MAX_GOAL_CHARS = 4000
 # Reglas del contrato que el esqueleto agrega a las instrucciones de todo proyecto. Sin ellas, el modelo del servidor
 # pedía permiso en texto en vez de llamar a la herramienta con efecto y la ejecución terminaba en error (14/11/2026).
 CONTRACT_RULES = """Reglas del servicio (las pone el contrato del curso):
-- No conversas con el usuario: cada ejecución termina con la respuesta final o con la llamada a una herramienta con efecto.
-- Las herramientas con efecto piden la aprobación de una persona automáticamente. Cuando corresponda la acción, llámala directamente; no pidas confirmación en texto.
-- Si una persona rechaza la acción o falta información, entrega la respuesta final y explica qué falta."""
+- Cuando resuelvas el pedido, entrega la respuesta final con la salida tipada.
+- Si falta un dato para continuar, pídelo en un texto breve: la persona contesta en una consulta complementaria.
+- Las herramientas con efecto piden la aprobación de una persona automáticamente. Si la persona pidió la acción y corresponde, llámala directamente; no pidas confirmación en texto.
+- Si una persona rechaza la acción, entrega la respuesta final y explica por qué no se hizo."""
 OUTPUT_RETRIES = 2
+
+
+class TextReply(BaseModel):
+    """Un turno de conversación en texto (por ejemplo, para pedir un dato que falta); no es la salida tipada."""
+
+    reply: str
+
+
+def _text_reply(text: str) -> TextReply:
+    return TextReply(reply=text.strip())
 
 
 # Proyecto del equipo --------------------------------------------------------------------------------
@@ -56,14 +69,14 @@ class Project:
     - `tools`: herramientas de consulta, sin efecto.
     - `retrieval_tools`: herramientas de recuperación que devuelven fragmentos con su fuente para citar.
     - `effect_tools`: herramientas que cambian algo (aunque sea simulado); siempre esperan aprobación.
-    - `deps(ambito)`: el objeto que reciben las herramientas en `ctx.deps`, con los datos vistos desde ese ámbito.
+    - `deps(scope)`: el objeto que reciben las herramientas en `ctx.deps`, con los datos vistos desde ese ámbito.
     - `output_type`: modelo de Pydantic con la respuesta final. Si tiene `needs_human` o `action == "needs_human"`,
       el contrato lo informa como derivación a una persona.
     """
 
     name: str
     instructions: str
-    ambitos: list[str]
+    scopes: list[str]
     output_type: type[BaseModel]
     deps: Callable[[str], Any]
     tools: list[Callable] = field(default_factory=list)
@@ -76,8 +89,8 @@ class Project:
 def check_project(project: Project) -> list[str]:
     """Lo que le falta al proyecto para cumplir el contrato del Hito 2; una lista vacía si cumple."""
     problems = []
-    if len(set(project.ambitos)) < 2:
-        problems.append("Declara al menos dos ámbitos distintos en `ambitos`.")
+    if len(set(project.scopes)) < 2:
+        problems.append("Declara al menos dos ámbitos distintos en `scopes`.")
     if not project.effect_tools:
         problems.append("Declara al menos una herramienta con efecto en `effect_tools`.")
     if not project.retrieval_tools:
@@ -113,27 +126,26 @@ class Decision(BaseModel):
 
 
 class RunRequest(BaseModel):
-    """Ejecución nueva (`goal` y `ambito`) o continuación de una pendiente (`run_id` y `decisions`)."""
+    """Ejecución nueva (`goal` y `scope`), decisión sobre una pendiente (`run_id` y `decisions`) o consulta
+    complementaria sobre una terminada (`run_id` y `goal`, sin `scope`: se mantiene el de la conversación)."""
 
     model_config = ConfigDict(extra="forbid")
     goal: str | None = Field(None, min_length=1, max_length=MAX_GOAL_CHARS)
-    ambito: str | None = Field(None, min_length=1, max_length=100)
+    scope: str | None = Field(None, min_length=1, max_length=100)
     run_id: str | None = Field(None, min_length=1, max_length=64)
     decisions: dict[str, Decision] | None = None
 
     @model_validator(mode="after")
     def _one_kind(self):
-        new = self.goal is not None or self.ambito is not None
-        resume = self.run_id is not None or self.decisions is not None
-        if new and resume:
-            raise ValueError("Usa `goal` y `ambito` para una ejecución nueva, o `run_id` y `decisions` para continuar.")
-        if new and (self.goal is None or self.ambito is None):
-            raise ValueError("Una ejecución nueva necesita `goal` y `ambito`.")
-        if resume and (self.run_id is None or not self.decisions):
-            raise ValueError("Para continuar se necesitan `run_id` y al menos una decisión en `decisions`.")
-        if not new and not resume:
-            raise ValueError("Envía `goal` y `ambito`, o `run_id` y `decisions`.")
+        given = {name for name in ("goal", "scope", "run_id", "decisions") if getattr(self, name) is not None}
+        if given not in ({"goal", "scope"}, {"run_id", "decisions"}, {"run_id", "goal"}) or self.decisions == {}:
+            raise ValueError("Envía `goal` y `scope` para una ejecución nueva, `run_id` y `decisions` para decidir "
+                             "sobre una pendiente, o `run_id` y `goal` para una consulta complementaria.")
         return self
+
+    @property
+    def kind(self) -> str:
+        return "new" if self.run_id is None else ("decide" if self.decisions else "follow_up")
 
 
 class PendingCall(BaseModel):
@@ -144,9 +156,11 @@ class PendingCall(BaseModel):
 
 class RunResponse(BaseModel):
     run_id: str
+    parent_run_id: str | None = None
     status: Literal["done", "pending_approval", "error"]
-    ambito: str
+    scope: str
     output: dict[str, Any] | None = None
+    output_kind: Literal["typed", "text"] | None = None
     pending: list[PendingCall] = []
     needs_human: bool = False
     error: str | None = None
@@ -159,7 +173,7 @@ class RunResponse(BaseModel):
 @dataclass
 class _Run:
     run_id: str
-    ambito: str
+    scope: str
     goal: str
     deps: Any
     utc_time: str
@@ -171,6 +185,12 @@ class _Run:
     decisions: dict[str, Decision] = field(default_factory=dict)
     latency_ms: int = 0
     error: str | None = None
+    parent_run_id: str | None = None
+    output_kind: str | None = None  # "typed" (la salida del proyecto) o "text" (un turno de conversación)
+    history: int = 0  # mensajes heredados de la conversación anterior; la traza muestra solo los nuevos
+
+    def new_messages(self) -> list:
+        return self.messages[self.history:]
 
 
 class Service:
@@ -192,11 +212,16 @@ class Service:
     def agent(self) -> Agent:
         if self._agent is None:
             self._agent = Agent(
-                self._model(), deps_type=object, output_type=[self.project.output_type, DeferredToolRequests],
+                self._model(), deps_type=object, output_type=self._output_types(),
                 instructions=f"{self.project.instructions.strip()}\n\n{CONTRACT_RULES}", tools=self.tools,
                 name=self.project.name, retries=OUTPUT_RETRIES,
             )
         return self._agent
+
+    def _output_types(self) -> list:
+        types = [self.project.output_type, DeferredToolRequests]
+        # En modo simulado, el modelo de prueba elegiría el texto: sin él recorre la salida tipada del proyecto.
+        return types if self.config.mode == "simulated" else [*types, TextOutput(_text_reply)]
 
     def _model(self):
         if self.config.mode == "simulated":
@@ -207,9 +232,18 @@ class Service:
 
         return create_model(self.model_ref, self.config, structured_output="tool")
 
-    async def start(self, goal: str, ambito: str) -> _Run:
-        run = _Run(uuid.uuid4().hex[:12], ambito, goal, self.project.deps(ambito),
+    async def start(self, goal: str, scope: str) -> _Run:
+        run = _Run(uuid.uuid4().hex[:12], scope, goal, self.project.deps(scope),
                    datetime.now(timezone.utc).isoformat(timespec="seconds"))
+        self.runs[run.run_id] = run
+        await self._execute(run, goal=goal)
+        return run
+
+    async def follow_up(self, parent: _Run, goal: str) -> _Run:
+        """Consulta complementaria: una ejecución nueva con la conversación anterior y el mismo ámbito."""
+        run = _Run(uuid.uuid4().hex[:12], parent.scope, goal, parent.deps,
+                   datetime.now(timezone.utc).isoformat(timespec="seconds"), messages=list(parent.messages),
+                   parent_run_id=parent.run_id, history=len(parent.messages))
         self.runs[run.run_id] = run
         await self._execute(run, goal=goal)
         return run
@@ -230,7 +264,7 @@ class Service:
         from .measure import redact
 
         start = perf_counter()
-        run.pending, run.output, run.error = [], None, None
+        run.pending, run.output, run.error, run.output_kind = [], None, None, None
         with capture_run_messages() as captured:
             try:
                 result = await self.agent().run(
@@ -245,11 +279,16 @@ class Service:
                     run.deferred_ids.update(c.tool_call_id for c in run.pending)
                 else:
                     run.status = "done"
+                    run.output_kind = "text" if isinstance(result.output, TextReply) else "typed"
                     run.output = result.output.model_dump(mode="json")
             except Exception as error:  # límite, salida que no cumple el esquema o proveedor: es un resultado
                 run.status = "error"
                 run.error = f"{type(error).__name__}: {redact(str(error)[:300], self.config.secrets())}"
-                run.messages = getattr(error, "messages", None) or captured or run.messages
+                messages = getattr(error, "messages", None) or captured
+                if messages:
+                    if run.history and list(messages[:run.history]) != run.messages[:run.history]:
+                        messages = run.messages[:run.history] + list(messages)
+                    run.messages = list(messages)
         run.latency_ms += round((perf_counter() - start) * 1000)
         self._save()
 
@@ -260,7 +299,7 @@ class Service:
         from .measure import cost
 
         usage = RunUsage()
-        for message in run.messages:
+        for message in run.new_messages():
             if getattr(message, "kind", "") == "response":
                 usage.incr(message.usage)
                 usage.requests += 1
@@ -268,10 +307,10 @@ class Service:
         priced = cost(self.model_ref, usage, self.config) if self.config.mode == "real" else {
             "estimated_cost_usd": None, "price_source": "modo simulado", "price_date": None}
         return {
-            "run_id": run.run_id, "utc_time": run.utc_time, "endpoint": "/agent/run", "project": self.project.name,
-            "ambito": run.ambito, "mode": self.config.mode, "models": {"generation": self.model_ref},
+            "run_id": run.run_id, "parent_run_id": run.parent_run_id, "utc_time": run.utc_time, "endpoint": "/agent/run", "project": self.project.name,
+            "scope": run.scope, "mode": self.config.mode, "models": {"generation": self.model_ref},
             "input": run.goal, "status": run.status, "steps": _steps(run),
-            "output": run.output, "pending": [call.model_dump() for call in run.pending],
+            "output": run.output, "output_kind": run.output_kind, "pending": [call.model_dump() for call in run.pending],
             "requests": usage.requests, "input_tokens": usage.input_tokens, "output_tokens": usage.output_tokens,
             **priced, "latency_ms": run.latency_ms if self.config.mode == "real" else None,
             "needs_human": needs_human, "needs_human_reason": reason, "error": run.error,
@@ -290,7 +329,7 @@ class Service:
         effect = {function.__name__ for function in self.project.effect_tools}
         return {
             "contract_version": CONTRACT_VERSION, "project": self.project.name,
-            "description": self.project.description, "ambitos": list(self.project.ambitos),
+            "description": self.project.description, "scopes": list(self.project.scopes),
             "tools": [{
                 "name": tool.name, "description": tool.tool_def.description,
                 "effect": tool.name in effect, "requires_approval": tool.name in effect,
@@ -332,7 +371,7 @@ def _steps(run: _Run) -> list[dict]:
     args = {part.tool_call_id: part.args_as_dict() for message in run.messages for part in message.parts
             if isinstance(part, ToolCallPart)}
     steps: list[dict] = []
-    for message in run.messages:
+    for message in run.new_messages():
         if isinstance(message, ModelResponse):
             calls = [part for part in message.parts if isinstance(part, ToolCallPart)]
             steps.append({"kind": "model", "input_tokens": message.usage.input_tokens,
@@ -389,13 +428,18 @@ def create_app(project: Project, *, model: str | None = None, config: Config | N
     @app.post("/agent/run", response_model=RunResponse)
     async def agent_run(request: RunRequest) -> RunResponse:
         if request.run_id is None:
-            if request.ambito not in project.ambitos:
+            if request.scope not in project.scopes:
                 raise HTTPException(403, f"Ámbito desconocido. Usa uno de los declarados en /schema.")
-            run = await service.start(request.goal, request.ambito)
+            run = await service.start(request.goal, request.scope)
         else:
             run = service.runs.get(request.run_id)
             if run is None:
                 raise HTTPException(404, "No hay una ejecución con ese run_id.")
+        if request.kind == "follow_up":
+            if run.status != "done":
+                raise HTTPException(409, "Solo se puede seguir una conversación desde una ejecución terminada (done).")
+            run = await service.follow_up(run, request.goal)
+        elif request.kind == "decide":
             if run.status != "pending_approval":
                 raise HTTPException(409, "Esa ejecución no espera una aprobación.")
             missing_ids = {call.tool_call_id for call in run.pending} - set(request.decisions)
@@ -404,7 +448,8 @@ def create_app(project: Project, *, model: str | None = None, config: Config | N
                 raise HTTPException(422, "Incluye una decisión por cada llamada pendiente y solo para ellas.")
             run = await service.resume(run, request.decisions)
         needs_human, _ = _needs_human(run.output)
-        return RunResponse(run_id=run.run_id, status=run.status, ambito=run.ambito, output=run.output,
+        return RunResponse(run_id=run.run_id, parent_run_id=run.parent_run_id, status=run.status, scope=run.scope,
+                           output=run.output, output_kind=run.output_kind,
                            pending=run.pending, needs_human=needs_human, error=run.error,
                            trace_url=f"/trace/{run.run_id}")
 
@@ -464,7 +509,9 @@ def load_app(path: str | Path):
 
 def show_record(record: dict) -> None:
     """Imprimir una traza de `GET /trace/{run_id}` paso a paso, como se leen en el laboratorio 5."""
-    print(f"run_id {record['run_id']} · ámbito {record['ambito']} · {record['status']} · modelo {record['models']['generation']}")
+    follows = f" · sigue a {record['parent_run_id']}" if record.get("parent_run_id") else ""
+    print(f"run_id {record['run_id']}{follows} · ámbito {record['scope']} · {record['status']} · "
+          f"modelo {record['models']['generation']}")
     print(f"   Objetivo: {record['input']}")
     for step in record["steps"]:
         kind, number = step["kind"], f"{step['step']:>4}."
@@ -548,7 +595,7 @@ CONTROLS = ("approval", "needs_human", "tool_refused", "limit", "invalid_output"
 async def run_adversarial(client, cases: list[dict]) -> list[dict]:
     """Correr casos adversariales contra el servicio y anotar qué control detuvo cada uno.
 
-    Cada caso trae `id`, `owner` (quién lo escribió), `family`, `ambito`, `goal` y `expected_control`, uno de
+    Cada caso trae `id`, `owner` (quién lo escribió), `family`, `scope`, `goal` y `expected_control`, uno de
     `CONTROLS`. El control observado sale de la respuesta y de la traza: aprobación pendiente, derivación a una
     persona, una herramienta que respondió con `error` (por ejemplo, fuera de ámbito), un límite, una salida que no
     cumplió el esquema, una petición rechazada por el contrato o ninguno. `none` significa que nada lo detuvo.
@@ -556,8 +603,8 @@ async def run_adversarial(client, cases: list[dict]) -> list[dict]:
     """
     rows = []
     for case in cases:
-        response = await client.post("/agent/run", json={"goal": case["goal"], "ambito": case["ambito"]})
-        row = {key: case.get(key) for key in ("id", "owner", "family", "ambito", "goal", "expected_control")}
+        response = await client.post("/agent/run", json={"goal": case["goal"], "scope": case["scope"]})
+        row = {key: case.get(key) for key in ("id", "owner", "family", "scope", "goal", "expected_control")}
         if response.status_code >= 400:
             controls = ["rejected_request"]
             row.update(http_status=response.status_code, status="rejected", run_id=None, tools="")

@@ -30,5 +30,5 @@ async def test_template_rules_live_in_code(tmp_path):
     assert module.freeze_membership(ctx, "S-103", 2)["done"] and deps.actions
     app = create_app(module.project, config=load_config(tmp_path, env={"CURSO_MODE": "simulated"}), trace_path=None)
     async with service_client(app) as client:
-        body = (await client.post("/agent/run", json={"goal": "Prueba", "ambito": "sede_norte"})).json()
+        body = (await client.post("/agent/run", json={"goal": "Prueba", "scope": "sede_norte"})).json()
     assert body["status"] == "pending_approval"
