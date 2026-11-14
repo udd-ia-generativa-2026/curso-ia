@@ -255,8 +255,15 @@ if IN_COLAB:
     LOCAL_PACKAGE = Path("/content/curso-ia-lab06.zip")
     package_source = (f"curso-ia[api] @ file://{{LOCAL_PACKAGE}}" if LOCAL_PACKAGE.exists() else
                       f"curso-ia[api] @ git+https://github.com/udd-ia-generativa-2026/curso-ia@{{PACKAGE_REF}}")
+    already_loaded = "curso_ia" in sys.modules
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "--upgrade", package_source])
-    print("Paquete instalado. Continúa con los secretos y la configuración.")
+    # pip no reinstala desde Git si el número de versión no cambió: se fuerza solo curso-ia, sin sus dependencias.
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "--force-reinstall", "--no-deps",
+                           package_source.replace("curso-ia[api] @", "curso-ia @", 1)])
+    if already_loaded:
+        print("Paquete actualizado. Reinicia la sesión (Entorno de ejecución → Reiniciar sesión) y ejecuta desde la celda siguiente.")
+    else:
+        print("Paquete instalado. Continúa con los secretos y la configuración.")
 else:
     print("Fuera de Colab se usa el paquete del entorno de desarrollo.")
 ''')
