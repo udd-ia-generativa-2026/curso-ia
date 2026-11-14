@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Literal
 
 from pydantic import BaseModel, Field
-from pydantic_ai import RunContext
+from pydantic_ai import ModelRetry, RunContext
 
 from .airline import Airline, load_airline
 from .files import lab_resource
@@ -66,6 +66,13 @@ def rebook(ctx: RunContext[Airline], booking_code: str, new_flight_number: str) 
     return ctx.deps.rebook(booking_code, new_flight_number)
 
 
+def check_resolution(ctx: RunContext[Airline], resolution: Resolution) -> Resolution:
+    """La respuesta no puede decir que se cambió la reserva si rebook no se ejecutó."""
+    if resolution.action == "rebooked" and not ctx.deps.changes:
+        raise ModelRetry("rebook no se ejecutó (una persona lo rechazó o no se llamó): no respondas rebooked.")
+    return resolution
+
+
 def pacifico_sur() -> Project:
     """El proyecto de ejemplo: cada pasajero es un ámbito y solo ve sus reservas."""
     scopes = sorted({booking["passenger_id"] for booking in load_airline()["bookings"]})
@@ -79,4 +86,5 @@ def pacifico_sur() -> Project:
         tools=[get_booking, search_flights, quote_change],
         retrieval_tools=[search_policies],
         effect_tools=[rebook],
+        output_validators=[check_resolution],
     )

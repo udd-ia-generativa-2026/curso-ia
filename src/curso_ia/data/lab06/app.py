@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from pydantic import BaseModel, Field
-from pydantic_ai import RunContext
+from pydantic_ai import ModelRetry, RunContext
 
 from curso_ia.service import Project, create_app, keyword_search, markdown_chunks
 
@@ -104,6 +104,14 @@ INSTRUCTIONS = """Eres el asistente de atención de un gimnasio. Atiendes a soci
 5. Reclamos, devoluciones o casos fuera del reglamento: action "needs_human".
 Nunca inventes reglas ni montos."""
 
+
+def check_answer(ctx: RunContext[ScopedData], answer: Answer) -> Answer:
+    """Regla sobre la salida, en el código: no decir que se congeló si freeze_membership no se ejecutó."""
+    if answer.action == "frozen" and not ctx.deps.actions:
+        raise ModelRetry("freeze_membership no se ejecutó (una persona lo rechazó o no se llamó): no respondas frozen.")
+    return answer
+
+
 # 4. El proyecto y la aplicación ------------------------------------------------------------------
 
 project = Project(
@@ -116,6 +124,7 @@ project = Project(
     tools=[get_member],
     retrieval_tools=[search_rules],
     effect_tools=[freeze_membership],
+    output_validators=[check_answer],
 )
 
 # El modelo sale de la configuración: GENERATION_MODEL (por ejemplo, curso:course-chat o google:gemini-...).

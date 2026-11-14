@@ -32,7 +32,7 @@ from time import perf_counter
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from pydantic_ai import Agent, DeferredToolRequests, DeferredToolResults, TextOutput, Tool, ToolDenied
+from pydantic_ai import Agent, DeferredToolRequests, DeferredToolResults, RunContext, TextOutput, Tool, ToolDenied
 from pydantic_ai.usage import RunUsage, UsageLimits
 
 from .config import Config, load_config, missing
@@ -72,6 +72,9 @@ class Project:
     - `deps(scope)`: el objeto que reciben las herramientas en `ctx.deps`, con los datos vistos desde ese ámbito.
     - `output_type`: modelo de Pydantic con la respuesta final. Si tiene `needs_human` o `action == "needs_human"`,
       el contrato lo informa como derivación a una persona.
+    - `output_validators`: reglas en el código sobre la respuesta final, `(ctx, salida) -> salida`; si no se
+      cumplen, lanzan `ModelRetry` con el motivo y el modelo corrige. Por ejemplo: no decir que se hizo una acción
+      que no se ejecutó.
     """
 
     name: str
@@ -82,6 +85,7 @@ class Project:
     tools: list[Callable] = field(default_factory=list)
     retrieval_tools: list[Callable] = field(default_factory=list)
     effect_tools: list[Callable] = field(default_factory=list)
+    output_validators: list[Callable] = field(default_factory=list)
     description: str = ""
     limits: UsageLimits = field(default_factory=lambda: UsageLimits(request_limit=10, tool_calls_limit=10))
 
@@ -211,12 +215,33 @@ class Service:
     # Modelo y agente; se crean al primer uso para que /health funcione aunque falte una clave.
     def agent(self) -> Agent:
         if self._agent is None:
-            self._agent = Agent(
+            agent = Agent(
                 self._model(), deps_type=object, output_type=self._output_types(),
                 instructions=f"{self.project.instructions.strip()}\n\n{CONTRACT_RULES}", tools=self.tools,
                 name=self.project.name, retries=OUTPUT_RETRIES,
             )
+            # En modo simulado el modelo de prueba inventa la salida (siempre la primera acción): las reglas del
+            # equipo la rechazarían sin que nada falle de verdad, así que solo se aplican con un modelo real.
+            if self.config.mode != "simulated":
+                for check in self.project.output_validators:
+                    agent.output_validator(self._typed_only(check))
+            self._agent = agent
         return self._agent
+
+    def _typed_only(self, check: Callable) -> Callable:
+        """Aplicar una regla del equipo solo a su salida tipada, no a un turno de texto ni a una aprobación."""
+        import inspect
+
+        output_type = self.project.output_type
+
+        async def validate(ctx: RunContext, output):
+            if not isinstance(output, output_type):
+                return output
+            result = check(ctx, output)
+            return await result if inspect.isawaitable(result) else result
+
+        validate.__name__ = getattr(check, "__name__", "output_validator")
+        return validate
 
     def _output_types(self) -> list:
         types = [self.project.output_type, DeferredToolRequests]
@@ -252,8 +277,9 @@ class Service:
         results = {}
         for call in run.pending:
             decision = decisions[call.tool_call_id]
+            denied = "Una persona rechazó esta acción y no se ejecutó."
             results[call.tool_call_id] = True if decision.approve else ToolDenied(
-                decision.reason or "Una persona rechazó esta acción.")
+                f"{denied} Motivo: {decision.reason}" if decision.reason else denied)
         run.decisions.update(decisions)
         await self._execute(run, deferred=DeferredToolResults(approvals=results))
         return run
@@ -336,6 +362,7 @@ class Service:
                 "citations": tool.name in retrieval, "parameters": tool.tool_def.parameters_json_schema,
             } for tool in self.tools],
             "output_schema": self.project.output_type.model_json_schema(),
+            "output_validators": [getattr(check, "__name__", "") for check in self.project.output_validators],
             "model": self.model_ref, "mode": self.config.mode,
             "limits": {"request_limit": self.project.limits.request_limit,
                        "tool_calls_limit": self.project.limits.tool_calls_limit},

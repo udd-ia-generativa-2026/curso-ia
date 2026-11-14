@@ -136,6 +136,36 @@ async def test_a_text_reply_is_a_conversation_turn(tmp_path):
     assert body["output"] == {"reply": "¿Cuál es su código de reserva?"} and record["output_kind"] == "text"
 
 
+async def test_a_denied_action_cannot_be_reported_as_done(tmp_path):
+    from pydantic_ai.messages import ModelResponse, ToolCallPart, ToolReturnPart
+    from pydantic_ai.models.function import FunctionModel
+
+    seen = []
+
+    async def model(messages, info):
+        last = messages[-1].parts
+        seen.append(last)
+        if not any(isinstance(part, ToolReturnPart) for part in last) and len(messages) == 1:
+            return ModelResponse(parts=[ToolCallPart("rebook", {"booking_code": "HN3VD8", "new_flight_number": "PS0203"})])
+        claimed = sum(1 for message in messages for part in message.parts
+                      if isinstance(part, ToolCallPart) and part.tool_name.startswith("final_result"))
+        action = "rebooked" if claimed == 0 else "no_change"  # primero miente; después del reintento, corrige
+        return ModelResponse(parts=[ToolCallPart(info.output_tools[0].name,
+                                                 {"action": action, "reason": "r", "reply": "x", "citations": []})])
+
+    app = create_app(pacifico_sur(), config=load_config(tmp_path, env={"CURSO_MODE": "real"}), trace_path=None)
+    app.state.service._model = lambda: FunctionModel(model)
+    async with service_client(app) as http:
+        body = (await http.post("/agent/run", json={"goal": "Un vuelo antes, HN3VD8.", "scope": "P03"})).json()
+        decisions = {call["tool_call_id"]: {"approve": False, "reason": "Revisar"} for call in body["pending"]}
+        done = (await http.post("/agent/run", json={"run_id": body["run_id"], "decisions": decisions})).json()
+        record = (await http.get(done["trace_url"])).json()
+    denial = next(part for parts in seen for part in parts if isinstance(part, ToolReturnPart))
+    assert "no se ejecutó" in str(denial.content) and "Revisar" in str(denial.content)
+    assert done["status"] == "done" and done["output"]["action"] == "no_change"
+    assert any(step["kind"] == "retry" and "rebook no se ejecutó" in step["text"] for step in record["steps"])
+
+
 def test_check_project_names_what_is_missing():
     def lookup(code: str) -> dict:
         return {}

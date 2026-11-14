@@ -38,7 +38,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from pydantic import BaseModel, Field
-from pydantic_ai import RunContext
+from pydantic_ai import ModelRetry, RunContext
 
 from curso_ia.service import Project, create_app, keyword_search, markdown_chunks
 
@@ -131,6 +131,14 @@ INSTRUCTIONS = """Eres el asistente de atención de un gimnasio. Atiendes a soci
 5. Reclamos, devoluciones o casos fuera del reglamento: action "needs_human".
 Nunca inventes reglas ni montos."""
 
+
+def check_answer(ctx: RunContext[ScopedData], answer: Answer) -> Answer:
+    """Regla sobre la salida, en el código: no decir que se congeló si freeze_membership no se ejecutó."""
+    if answer.action == "frozen" and not ctx.deps.actions:
+        raise ModelRetry("freeze_membership no se ejecutó (una persona lo rechazó o no se llamó): no respondas frozen.")
+    return answer
+
+
 # 4. El proyecto y la aplicación ------------------------------------------------------------------
 
 project = Project(
@@ -143,6 +151,7 @@ project = Project(
     tools=[get_member],
     retrieval_tools=[search_rules],
     effect_tools=[freeze_membership],
+    output_validators=[check_answer],
 )
 
 # El modelo sale de la configuración: GENERATION_MODEL (por ejemplo, curso:course-chat o google:gemini-...).
@@ -380,6 +389,7 @@ Reemplacen las partes de la plantilla por las de su proyecto, pensando en su Hit
 | `DOCUMENTS` y `retrieval_tools` | Sus documentos y la búsqueda en ellos, que devuelve cada fragmento con su fuente para citar. La plantilla usa `keyword_search` (más abajo); si su Hito 1 ya tiene una recuperación propia, pueden usarla en su lugar |
 | `effect_tools` | La acción de su sistema (un reembolso, un pedido, un registro), simulada; siempre espera aprobación |
 | `Answer` e `INSTRUCTIONS` | Su salida tipada y sus instrucciones |
+| `check_answer` | Reglas sobre la salida, en el código: por ejemplo, no decir que la acción se hizo si una persona la rechazó. Si no se cumplen, el modelo recibe el motivo y corrige |
 
 Después de cada cambio, la celda de comprobación les dice qué falta para cumplir el contrato.
 """)
@@ -454,9 +464,11 @@ Pongan `CHAT = True` y ejecuten la celda: se abre un cuadro para escribir. Si el
 
 code('''
 CHAT = False  # True abre la conversación; con False, «Ejecutar todo» no se detiene aquí.
-CHAT_SCOPE = SCOPE
+CHAT_SCOPE = SCOPE  # sede_centro ve a S-101, S-102 y S-103; para hablar como N-201, usen "sede_norte".
 
 run_id = None
+if CHAT:
+    print(f"Conversación en el ámbito {CHAT_SCOPE}: el servicio solo ve los datos de ese ámbito.")
 while CHAT:
     text = input("Usted: ").strip()
     if text.lower() in ("", "salir"):
