@@ -24,6 +24,7 @@ lab03 = [
 api = [
   "fastapi>=0.115,<1",
   "uvicorn>=0.30,<1",
+  "pytest>=8,<10",
 ]
 # Laboratorio 5, extensión y demostración de MCP: las mismas herramientas como servidor MCP.
 lab05 = [

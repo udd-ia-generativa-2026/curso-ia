@@ -714,6 +714,7 @@ dependencies = [
 [package.optional-dependencies]
 api = [
     { name = "fastapi" },
+    { name = "pytest" },
     { name = "uvicorn" },
 ]
 lab03 = [
@@ -747,6 +748,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.2,<4" },
     { name = "pydantic-ai-slim", extras = ["google", "openai"], specifier = ">=2.55,<3" },
     { name = "pydantic-ai-slim", extras = ["mcp"], marker = "extra == 'lab05'", specifier = ">=2.55,<3" },
+    { name = "pytest", marker = "extra == 'api'", specifier = ">=8,<10" },
     { name = "python-dotenv", specifier = ">=1,<2" },
     { name = "qdrant-client", marker = "extra == 'lab03'", specifier = ">=1.12,<2" },
     { name = "tqdm", specifier = ">=4.66,<5" },

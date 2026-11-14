@@ -427,6 +427,54 @@ def service_client(app):
     return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://servicio", timeout=120)
 
 
+def load_app(path: str | Path):
+    """Cargar (o volver a cargar) el `app.py` del equipo y devolver el módulo, con `project` y `app`.
+
+    Sirve en el notebook después de editar el archivo: cada llamada lee la versión actual.
+    """
+    import importlib.util
+    import sys
+
+    path = Path(path).resolve()
+    spec = importlib.util.spec_from_file_location("team_app", path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["team_app"] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def show_record(record: dict) -> None:
+    """Imprimir una traza de `GET /trace/{run_id}` paso a paso, como se leen en el laboratorio 5."""
+    print(f"run_id {record['run_id']} · ámbito {record['ambito']} · {record['status']} · modelo {record['models']['generation']}")
+    print(f"   Objetivo: {record['input']}")
+    for step in record["steps"]:
+        kind, number = step["kind"], f"{step['step']:>4}."
+        if kind == "model":
+            asked = ", ".join(step["requested"]) or "texto"
+            print(f"{number} Modelo ({step['input_tokens']} tokens de entrada) pide: {asked}")
+        elif kind == "tool":
+            print(f"{number} Herramienta {step['tool']}({_call_args(step['args'])}) → {_short(step['result'], 160)}")
+        elif kind == "tool_denied":
+            print(f"{number} No se ejecutó {step['tool']}: la persona lo rechazó")
+        elif kind == "approval_requested":
+            print(f"{number} Pide aprobación: {step['tool']}({_call_args(step['args'])})")
+        elif kind == "approval_decided":
+            verdict = "aprobó" if step["approved"] else f"rechazó ({step.get('reason') or 'sin motivo'})"
+            print(f"{number} La persona {verdict}")
+        elif kind == "retry":
+            print(f"{number} PydanticAI pidió corregir {step.get('tool') or 'la salida'}: {_short(step['text'], 160)}")
+    if record["output"]:
+        print(f"   Salida: {_short(record['output'], 400)}")
+    if record["error"]:
+        print(f"   Error: {record['error']}")
+    print(f"   Solicitudes: {record['requests']} · tokens de entrada: {record['input_tokens']} · "
+          f"latencia: {record['latency_ms']} ms · costo estimado: {record['estimated_cost_usd']}")
+
+
+def _call_args(args: dict | None) -> str:
+    return ", ".join(f"{key}={value!r}" for key, value in (args or {}).items())
+
+
 # Recuperación con citas -----------------------------------------------------------------------------
 
 
