@@ -392,9 +392,47 @@ Reemplacen las partes de la plantilla por las de su proyecto, pensando en su Hit
 | `check_answer` | Reglas sobre la salida, en el código: por ejemplo, no decir que la acción se hizo si una persona la rechazó. Si no se cumplen, el modelo recibe el motivo y corrige |
 
 Después de cada cambio, la celda de comprobación les dice qué falta para cumplir el contrato.
+
+**Si escriben `app.py` en su repositorio**, por ejemplo con su asistente de código, no necesitan editar la celda: ejecútenla igual y, en la celda que sigue, pongan `UPLOAD = True` y suban su `src/app.py` o el ZIP del repositorio («Code», «Download ZIP» en GitHub). Con el ZIP llegan también los archivos que su `app.py` lea, como el corpus, con las mismas carpetas. Lo subido reemplaza la plantilla y el resto del notebook trabaja con su versión.
 """)
 
 code("%%writefile src/app.py\n" + APP_TEMPLATE.strip("\n"))
+
+code('''
+UPLOAD = False  # True: subir su src/app.py o el ZIP del repositorio; reemplaza la plantilla de la celda anterior.
+
+if UPLOAD and not IN_COLAB:
+    print("Fuera de Colab, copien su app.py en src/app.py.")
+elif UPLOAD:
+    import io
+    import zipfile
+
+    from google.colab import files
+
+    uploaded = files.upload()  # se abre un botón para elegir el archivo
+    for name, content in uploaded.items():
+        if name.endswith(".py"):
+            (ROOT / "src/app.py").write_bytes(content)
+            print(f"{name} copiado en src/app.py")
+        elif name.endswith(".zip"):
+            with zipfile.ZipFile(io.BytesIO(content)) as archive:
+                members = [m for m in archive.infolist() if not m.is_dir()]
+                # GitHub pone todo dentro de una carpeta como grupo-X-main/; se quita esa carpeta.
+                tops = {Path(m.filename).parts[0] for m in members}
+                strip = 1 if len(tops) == 1 and len(Path(members[0].filename).parts) > 1 else 0
+                copied = 0
+                for member in members:
+                    relative = Path(*Path(member.filename).parts[strip:])
+                    # Las pruebas del contrato siempre vienen del paquete del curso (sección 5).
+                    if relative == Path("tests/test_contract.py") or relative.parts[0] == ".git":
+                        continue
+                    (ROOT / relative).parent.mkdir(parents=True, exist_ok=True)
+                    (ROOT / relative).write_bytes(archive.read(member))
+                    copied += 1
+            print(f"{name}: {copied} archivos copiados.", "Incluye src/app.py." if (ROOT / "src/app.py").exists() else "")
+        else:
+            print(f"{name}: se esperaba app.py o un ZIP del repositorio.")
+''')
 
 code('''
 team = load_app(ROOT / "src/app.py")  # vuelve a leer el archivo cada vez
