@@ -14,6 +14,8 @@ Laboratorio 4: [![Abrir en Colab](https://colab.research.google.com/assets/colab
 
 Laboratorio 5: [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/lab05/notebooks/lab05.ipynb)
 
+Laboratorio 6 y Hito 2: [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/lab06/notebooks/lab06.ipynb)
+
 Hito 1, línea base (apoyo opcional): [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/hito1/notebooks/hito1.ipynb)
 
 La primera celda de cada notebook instala el paquete:
@@ -75,6 +77,14 @@ El notebook `notebooks/lab05.ipynb` resuelve 13 solicitudes sintéticas de cambi
 El modelo es `curso:course-chat` en clase (Gemma 4 26B-A4B en el servidor del curso; la salida tipada va como herramienta, porque el agente llama herramientas en la misma respuesta) y `google:gemini-3.5-flash-lite` fuera de ella. Los datos se regeneran con `scripts/generate_lab05.py` y el notebook con `scripts/build_lab05_notebook.py`.
 
 Comprobaciones: `uv run pytest`; `uv run python scripts/check_lab05.py` ejecuta el notebook completo en modo simulado, y con `--model curso:course-chat --copies 6` (con `CURSO_BASE_URL` y `CURSO_API_KEY` en el entorno) lo ejecuta contra el servidor como seis equipos a la vez.
+
+## Laboratorio 6 · Del agente al servicio (Hito 2)
+
+`curso_ia.service` es el esqueleto del servicio del proyecto: el equipo declara un `Project` (instrucciones, ámbitos, herramientas de consulta, de recuperación con citas y con efecto, salida tipada y `deps(scope)`) y `create_app` arma un agente de PydanticAI con los cuatro endpoints del contrato del curso: `POST /agent/run`, `GET /trace/{run_id}`, `GET /schema` y `GET /health`. Las herramientas con efecto siempre esperan aprobación (`pending_approval`, que se continúa con `run_id` y `decisions`), cada ejecución deja una traza con el formato del laboratorio 5 y `run_adversarial` corre casos adversariales y registra qué control actuó. `service_client(app)` llama al servicio desde Colab sin levantar un servidor; en local corre con `uvicorn` (extra `api`). `service_example.pacifico_sur()` es el agente del laboratorio 5 como servicio.
+
+El notebook `notebooks/lab06.ipynb` recorre el contrato con el ejemplo de Pacífico Sur, escribe `src/app.py` desde una plantilla que ya cumple el contrato, corre `tests/test_contract.py` en modo simulado, corre un caso adversarial por integrante y guarda `trace.jsonl`, `adversarial.csv` y `experiment.json` en `labs/lab06-service/`, con un ZIP para la entrega del Hito 2. Las plantillas `app.py` y `test_contract.py` también están en `src/curso_ia/data/lab06/`. El modelo es `curso:course-chat` en clase y `google:gemini-3.5-flash-lite` fuera de ella. El notebook se regenera con `scripts/build_lab06_notebook.py`.
+
+Comprobaciones: `uv run pytest`; `uv run python scripts/check_lab06.py` ejecuta el notebook completo en modo simulado.
 
 ## Hito 1 · Línea base, apoyo opcional
 

@@ -12,7 +12,7 @@ from pathlib import Path
 import nbformat
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKAGE_REF = "api-skeleton"  # rama de prueba; pasa a "lab06" al publicar
+PACKAGE_REF = "lab06"
 CELLS: list[tuple[str, str]] = []
 
 
