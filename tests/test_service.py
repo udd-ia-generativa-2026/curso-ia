@@ -9,7 +9,7 @@ import pytest
 from curso_ia import load_config
 from curso_ia.service import (
     CONTRACT_RULES, Project, check_project, create_app, keyword_search, markdown_chunks, run_adversarial,
-    service_client, write_contract_tests,
+    service_client, tool_steps, write_contract_tests,
 )
 from curso_ia.service_example import Resolution, pacifico_sur
 
@@ -101,6 +101,17 @@ async def test_resume_needs_one_decision_per_pending_call(client):
     again = await client.post("/agent/run", json={"run_id": body["run_id"], "decisions": decisions})
     assert again.status_code == 409
     assert (await client.get("/trace/no-existe")).status_code == 404
+
+
+async def test_tool_steps_only_grow_after_a_decision(client):
+    body = await start(client)
+    before = tool_steps((await client.get(body["trace_url"])).json())
+    assert any(line.startswith("Pide aprobación: ") for line in before)
+    decisions = {call["tool_call_id"]: {"approve": False, "reason": "No"} for call in body["pending"]}
+    done = (await client.post("/agent/run", json={"run_id": body["run_id"], "decisions": decisions})).json()
+    after = tool_steps((await client.get(done["trace_url"])).json())
+    assert after[:len(before)] == before  # el chat imprime solo after[len(before):]
+    assert any(line.startswith("No se ejecutó ") for line in after[len(before):])
 
 
 async def test_follow_up_keeps_the_scope_and_traces_only_the_new_turn(app, client):

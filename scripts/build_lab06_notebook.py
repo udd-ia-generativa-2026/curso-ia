@@ -286,7 +286,8 @@ import pandas as pd
 from curso_ia import load_config, save_experiment
 from curso_ia.config import missing
 from curso_ia.service import (CONTROLS, check_project, create_app, keyword_search, load_app, run_adversarial,
-                              service_client, show_record, write_contract_tests)
+                              service_client, show_record, tool_steps,
+                              write_contract_tests)
 from curso_ia.service_example import pacifico_sur
 
 MODE = "simulated"  # @param ["simulated", "real"]
@@ -344,32 +345,43 @@ print("Ámbitos:", schema["scopes"])
 
 code('''
 # Un pedido nuevo: la pasajera P03 quiere un vuelo antes (caso c03 del laboratorio 5).
-response = await client.post("/agent/run", json={
+REQUEST = {
     "scope": "P03",
     "goal": "Mi vuelo a Antofagasta, reserva HN3VD8, lo movieron de las 10:30 a las 13:40. ¿Hay algo que salga antes hoy?",
-})
-body = response.json()
-print("Estado:", body["status"])
-for call in body["pending"]:
+}
+pending = (await client.post("/agent/run", json=REQUEST)).json()  # la celda de decisión trabaja sobre esta copia
+print("Estado:", pending["status"])
+for call in pending["pending"]:
     print("Pendiente de aprobación:", call["tool"], call["args"])
 ''')
 
 md("""
 Si el estado es `pending_approval`, nada cambió todavía. Decidan como supervisores: `APPROVE = True` aprueba, `False` rechaza con el motivo de `DENY_REASON`. `None` deja la decisión pendiente al ejecutar todo.
+
+Una ejecución se decide una sola vez: el contrato responde 409 a una segunda decisión. Para probar otra, cambien `APPROVE` o `DENY_REASON` y vuelvan a ejecutar solo esta celda: repite el mismo pedido (`REQUEST`) y decide sobre la ejecución nueva. En modo real el modelo puede pedir algo distinto al repetir; la celda lo muestra antes de decidir.
 """)
 
 code('''
 APPROVE = None  # None espera; True aprueba; False rechaza.
 DENY_REASON = "Revisar con el pasajero antes de cambiar."
 
-if APPROVE is None or body["status"] != "pending_approval":
+if APPROVE is None:
     print("Sin decisión: elige True o False y vuelve a ejecutar esta celda.")
 else:
-    decisions = {call["tool_call_id"]: {"approve": APPROVE, "reason": None if APPROVE else DENY_REASON}
-                 for call in body["pending"]}
-    body = (await client.post("/agent/run", json={"run_id": body["run_id"], "decisions": decisions})).json()
-    print("Estado:", body["status"], "· salida:", body["output"])
-show_record((await client.get(body["trace_url"])).json())
+    if pending is None:  # la ejecución anterior ya se decidió: se repite el mismo pedido
+        pending = (await client.post("/agent/run", json=REQUEST)).json()
+        print("Pedido repetido · estado:", pending["status"])
+        for call in pending["pending"]:
+            print("Pendiente de aprobación:", call["tool"], call["args"])
+    if pending["status"] != "pending_approval":
+        print("Esta ejecución no espera aprobación: no hay nada que decidir.")
+    else:
+        decisions = {call["tool_call_id"]: {"approve": APPROVE, "reason": None if APPROVE else DENY_REASON}
+                     for call in pending["pending"]}
+        decided = (await client.post("/agent/run", json={"run_id": pending["run_id"], "decisions": decisions})).json()
+        pending = None  # ya decidida: la próxima vez la celda repite el pedido
+        print("Estado:", decided["status"], "· salida:", decided["output"])
+        show_record((await client.get(decided["trace_url"])).json())
 ''')
 
 md("""
@@ -472,24 +484,36 @@ code('''
 GOAL = "Soy la socia S-103 y quiero congelar mi plan por 2 meses."
 SCOPE = "sede_centro"
 
-body = (await team_client.post("/agent/run", json={"goal": GOAL, "scope": SCOPE})).json()
-print("Estado:", body["status"], "· necesita a una persona:", body["needs_human"], "· error:", body["error"])
-for call in body["pending"]:
+team_pending = (await team_client.post("/agent/run", json={"goal": GOAL, "scope": SCOPE})).json()  # copia para decidir
+print("Estado:", team_pending["status"], "· necesita a una persona:", team_pending["needs_human"],
+      "· error:", team_pending["error"])
+for call in team_pending["pending"]:
     print("Pendiente de aprobación:", call["tool"], call["args"])
-show_record((await team_client.get(body["trace_url"])).json())
+show_record((await team_client.get(team_pending["trace_url"])).json())
 ''')
 
 code('''
+# Como en la sección 3: cambien la decisión y vuelvan a ejecutar solo esta celda.
 TEAM_APPROVE = None  # None espera; True aprueba; False rechaza.
 TEAM_DENY_REASON = "Falta confirmar con el socio."
 
-if TEAM_APPROVE is None or body["status"] != "pending_approval":
+if TEAM_APPROVE is None:
     print("Sin decisión: elige True o False y vuelve a ejecutar esta celda.")
 else:
-    decisions = {call["tool_call_id"]: {"approve": TEAM_APPROVE, "reason": None if TEAM_APPROVE else TEAM_DENY_REASON}
-                 for call in body["pending"]}
-    body = (await team_client.post("/agent/run", json={"run_id": body["run_id"], "decisions": decisions})).json()
-    show_record((await team_client.get(body["trace_url"])).json())
+    if team_pending is None:  # la ejecución anterior ya se decidió: se repite el mismo pedido
+        team_pending = (await team_client.post("/agent/run", json={"goal": GOAL, "scope": SCOPE})).json()
+        print("Pedido repetido · estado:", team_pending["status"])
+        for call in team_pending["pending"]:
+            print("Pendiente de aprobación:", call["tool"], call["args"])
+    if team_pending["status"] != "pending_approval":
+        print("Esta ejecución no espera aprobación: no hay nada que decidir.")
+    else:
+        decisions = {call["tool_call_id"]: {"approve": TEAM_APPROVE, "reason": None if TEAM_APPROVE else TEAM_DENY_REASON}
+                     for call in team_pending["pending"]}
+        decided = (await team_client.post("/agent/run", json={"run_id": team_pending["run_id"], "decisions": decisions})).json()
+        team_pending = None  # ya decidida: la próxima vez la celda repite el pedido
+        print("Estado:", decided["status"], "· salida:", decided["output"])
+        show_record((await team_client.get(decided["trace_url"])).json())
 ''')
 
 md("""
@@ -497,12 +521,21 @@ md("""
 
 Hasta aquí cada pedido parte de cero. Con una **consulta complementaria**, el servicio recibe el `run_id` de la ejecución anterior y un pedido nuevo, y responde recordando la conversación; el ámbito no cambia a mitad de camino. Cuando resuelve un pedido, el agente responde con su salida tipada y la persona lee el campo `reply` (o el que tenga su salida). Si le falta un dato, puede contestar con un texto breve: la respuesta trae `output_kind` igual a `"text"` en vez de `"typed"`, y la traza lo registra.
 
-Pongan `CHAT = True` y ejecuten la celda: se abre un cuadro para escribir. Si el agente pide una acción con efecto, la celda les pregunta si la aprueban. Para cerrar la conversación, escriban `salir` o dejen el cuadro vacío.
+Pongan `CHAT = True` y ejecuten la celda: se abre un cuadro para escribir. Después de cada mensaje, las líneas con `·` muestran las herramientas que usó el servicio en ese turno, leídas de su traza: qué consultó, qué pidió aprobar y qué no se ejecutó. Si el agente pide una acción con efecto, la celda les pregunta si la aprueban. Para cerrar la conversación, escriban `salir` o dejen el cuadro vacío.
 """)
 
 code('''
 CHAT = False  # True abre la conversación; con False, «Ejecutar todo» no se detiene aquí.
 CHAT_SCOPE = SCOPE  # sede_centro ve a S-101, S-102 y S-103; para hablar como N-201, usen "sede_norte".
+
+
+async def show_tools(body, shown=0):
+    """Imprime las herramientas de la traza que todavía no se mostraron y devuelve cuántas lleva la ejecución."""
+    lines = tool_steps((await team_client.get(body["trace_url"])).json())
+    for line in lines[shown:]:
+        print("   ·", line)
+    return len(lines)
+
 
 run_id = None
 if CHAT:
@@ -514,12 +547,16 @@ while CHAT:
         break
     payload = {"run_id": run_id, "goal": text} if run_id else {"goal": text, "scope": CHAT_SCOPE}
     body = (await team_client.post("/agent/run", json=payload)).json()
+    shown = await show_tools(body)
     while body["status"] == "pending_approval":
         decisions = {}
         for call in body["pending"]:
             approve = input(f"¿Aprueba {call['tool']} {call['args']}? (s/n): ").strip().lower() == "s"
             decisions[call["tool_call_id"]] = {"approve": approve, "reason": None if approve else "Rechazada en la conversación."}
         body = (await team_client.post("/agent/run", json={"run_id": body["run_id"], "decisions": decisions})).json()
+        shown = await show_tools(body, shown)
+    if not shown:
+        print("   · Sin herramientas en este turno.")
     if body["status"] == "error":
         print("Error:", body["error"], "· pueden seguir desde la respuesta anterior.")
         continue

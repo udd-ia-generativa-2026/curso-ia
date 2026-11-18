@@ -541,27 +541,40 @@ def show_record(record: dict) -> None:
           f"modelo {record['models']['generation']}")
     print(f"   Objetivo: {record['input']}")
     for step in record["steps"]:
-        kind, number = step["kind"], f"{step['step']:>4}."
-        if kind == "model":
-            asked = ", ".join(step["requested"]) or "texto"
-            print(f"{number} Modelo ({step['input_tokens']} tokens de entrada) pide: {asked}")
-        elif kind == "tool":
-            print(f"{number} Herramienta {step['tool']}({_call_args(step['args'])}) → {_short(step['result'], 160)}")
-        elif kind == "tool_denied":
-            print(f"{number} No se ejecutó {step['tool']}: la persona lo rechazó")
-        elif kind == "approval_requested":
-            print(f"{number} Pide aprobación: {step['tool']}({_call_args(step['args'])})")
-        elif kind == "approval_decided":
-            verdict = "aprobó" if step["approved"] else f"rechazó ({step.get('reason') or 'sin motivo'})"
-            print(f"{number} La persona {verdict}")
-        elif kind == "retry":
-            print(f"{number} PydanticAI pidió corregir {step.get('tool') or 'la salida'}: {_short(step['text'], 160)}")
+        print(f"{step['step']:>4}. {_step_line(step)}")
     if record["output"]:
         print(f"   Salida: {_short(record['output'], 400)}")
     if record["error"]:
         print(f"   Error: {record['error']}")
     print(f"   Solicitudes: {record['requests']} · tokens de entrada: {record['input_tokens']} · "
           f"latencia: {record['latency_ms']} ms · costo estimado: {record['estimated_cost_usd']}")
+
+
+def tool_steps(record: dict) -> list[str]:
+    """Las herramientas de una traza, una línea por llamada y en orden: ejecutadas, rechazadas, pendientes de
+    aprobación y reintentos. Deja fuera los pasos del modelo y las decisiones, así que una ejecución que sigue después
+    de una aprobación solo agrega líneas al final: sirve para mostrar en una conversación qué hizo el servicio."""
+    kinds = ("tool", "tool_denied", "approval_requested", "retry")
+    return [_step_line(step) for step in record["steps"] if step["kind"] in kinds]
+
+
+def _step_line(step: dict) -> str:
+    kind = step["kind"]
+    if kind == "model":
+        asked = ", ".join(step["requested"]) or "texto"
+        return f"Modelo ({step['input_tokens']} tokens de entrada) pide: {asked}"
+    if kind == "tool":
+        return f"Herramienta {step['tool']}({_call_args(step['args'])}) → {_short(step['result'], 160)}"
+    if kind == "tool_denied":
+        return f"No se ejecutó {step['tool']}: la persona lo rechazó"
+    if kind == "approval_requested":
+        return f"Pide aprobación: {step['tool']}({_call_args(step['args'])})"
+    if kind == "approval_decided":
+        verdict = "aprobó" if step["approved"] else f"rechazó ({step.get('reason') or 'sin motivo'})"
+        return f"La persona {verdict}"
+    if kind == "retry":
+        return f"PydanticAI pidió corregir {step.get('tool') or 'la salida'}: {_short(step['text'], 160)}"
+    return kind
 
 
 def _call_args(args: dict | None) -> str:
