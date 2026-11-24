@@ -23,7 +23,7 @@ from nbclient import NotebookClient
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def prepare(mode: str, model: str, judge: str, use_example: bool, decision: str | None) -> nbformat.NotebookNode:
+def prepare(mode: str, model: str, judge: str, use_example: bool) -> nbformat.NotebookNode:
     notebook = nbformat.read(ROOT / "notebooks/lab07.ipynb", as_version=4)
     for cell in notebook.cells:
         if cell.cell_type == "code":
@@ -31,9 +31,6 @@ def prepare(mode: str, model: str, judge: str, use_example: bool, decision: str 
                            .replace('MODEL = "curso:course-chat"', f"MODEL = {model!r}")
                            .replace('JUDGE_MODEL = "google:gemma-4-26b-a4b-it"', f"JUDGE_MODEL = {judge!r}")
                            .replace("USE_EXAMPLE = True", f"USE_EXAMPLE = {use_example}"))
-            if decision:
-                cell.source = (cell.source.replace('DECISION_MODEL = "d1:curso"', f"DECISION_MODEL = {decision!r}")
-                               .replace("USE_D1 = False", f"USE_D1 = {decision == 'd1:colab'}"))
     return notebook
 
 
@@ -41,13 +38,12 @@ async def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default=None)
     parser.add_argument("--judge", default=None)
-    parser.add_argument("--decision", default=None, help="d1:colab levanta d1-2B con llama-server en este equipo")
     parser.add_argument("--repo", default=None, help="carpeta con src/app.py, eval/cases.jsonl, corpus/ ...")
     args = parser.parse_args()
     mode = "real" if args.model else "simulated"
     model = args.model or "curso:course-chat"
     judge = args.judge or model
-    notebook = prepare(mode, model, judge, use_example=args.repo is None, decision=args.decision)
+    notebook = prepare(mode, model, judge, use_example=args.repo is None)
     out = ROOT / "runs/lab07-check"
     out.mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("PYTHONPATH", str(ROOT / "src"))

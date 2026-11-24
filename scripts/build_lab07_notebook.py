@@ -41,7 +41,6 @@ Guarda una copia del notebook en tu Drive y ejecuta la celda de instalación (al
 
 - `MODEL` es el modelo de su servicio: en clase, `curso:course-chat` (Gemma 4 26B-A4B del servidor del curso); fuera de clase, `google:gemini-3.5-flash-lite`.
 - `JUDGE_MODEL` es el modelo del juez. Conviene que sea distinto del que responde: un modelo tiende a aprobar sus propias respuestas.
-- `DECISION_MODEL` solo si su servicio usa un modelo de decisión, como d1-2B del laboratorio 4: en clase, `d1:curso`; fuera de clase, `d1:colab` con `USE_D1 = True`, que lo levanta en esta sesión (elijan una GPU T4 antes de instalar).
 - `MODE = "simulated"` recorre el notebook sin red; las cifras no significan nada. Para medir, `real`.
 """)
 
@@ -99,10 +98,6 @@ MODEL = "curso:course-chat"  # @param ["curso:course-chat", "google:gemini-3.5-f
 os.environ["GENERATION_MODEL"] = MODEL
 # Modelo del juez: otro modelo que el del servicio, si se puede.
 JUDGE_MODEL = "google:gemma-4-26b-a4b-it"  # @param ["google:gemma-4-26b-a4b-it", "google:gemini-3.5-flash-lite", "curso:course-chat"]
-# Modelo de decisión, solo si su servicio lo usa (laboratorio 4): "d1:curso" en clase, "d1:colab" fuera de clase.
-DECISION_MODEL = "d1:curso"  # @param ["d1:curso", "d1:colab"]
-os.environ["DECISION_MODEL"] = DECISION_MODEL
-USE_D1 = False  # True levanta d1-2B en esta sesión si DECISION_MODEL es "d1:colab"
 
 # Servidor del curso sin Secretos: descomenta y pega la clave del día que entrega el docente.
 # os.environ["CURSO_BASE_URL"] = "https://tofu.tail07b663.ts.net/v1"
@@ -132,6 +127,8 @@ Con `USE_EXAMPLE = True` el notebook usa el gimnasio de la plantilla, con un con
 | `corpus/` | los documentos que se citan; el nombre del archivo sin extensión es el `doc_id` |
 | `labs/lab06-service/experiment.json` | sus casos adversariales del Hito 2 |
 | `eval/baseline/outputs.jsonl` | la línea base del Hito 1, si usaron el notebook del Hito 1 |
+
+Su servicio se evalúa tal como está: si usa otros modelos por dentro, como d1-2B del laboratorio 4, los configura su propio `app.py`. Si necesitan levantar d1-2B en esta sesión, agreguen una celda antes de cargar el servicio con `from curso_ia.decision import start_d1` y `start_d1()`, como en su laboratorio 6.
 
 Si su `app.py` y su conjunto quedaron dentro de una carpeta (por ejemplo `Hito 2/`), el notebook la encuentra. Si no, súbanlos en el panel **Archivos** de Colab a esas rutas.
 
@@ -169,11 +166,6 @@ for path in ("src/app.py", "eval/cases.jsonl", "corpus", "labs/lab06-service/exp
 ''')
 
 code(r'''
-if USE_D1 and DECISION_MODEL == "d1:colab" and config.mode == "real":
-    from curso_ia.decision import start_d1
-
-    start_d1()  # unos minutos la primera vez: descarga llama.cpp y d1-2B
-
 team = load_app(ROOT / "src/app.py")  # vuelve a leer el archivo cada vez
 problems = check_project(team.project)
 print("Cumple el contrato." if not problems else "Falta:\n- " + "\n- ".join(problems))
