@@ -57,6 +57,51 @@ def unpack_repository(content: bytes, root: str | Path) -> list[str]:
     return copied
 
 
+def promote_project(root: str | Path) -> str | None:
+    """Si `src/app.py` o `eval/cases.jsonl` quedaron dentro de una subcarpeta del ZIP (por ejemplo `Hito 2/`), copiar
+    esa subcarpeta a la raíz sin reemplazar lo que ya está. Devuelve la subcarpeta usada o `None`."""
+    root = Path(root)
+    promoted = None
+    for target in ("src/app.py", "eval/cases.jsonl"):
+        if (root / target).exists():
+            continue
+        found = sorted(path for path in root.rglob(Path(target).name)
+                       if path.parent.name == Path(target).parent.name and "__MACOSX" not in path.parts)
+        if not found:
+            continue
+        base = found[0].parent.parent
+        for path in base.rglob("*"):
+            destination = root / path.relative_to(base)
+            if path.is_file() and not destination.exists():
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(path.read_bytes())
+        promoted = base.relative_to(root).as_posix()
+    return promoted
+
+
+TEMPLATE_NAME = "gimnasio-dos-sedes"  # el proyecto de la plantilla del laboratorio 6
+
+
+def ensure_service(root: str | Path) -> str:
+    """Dejar un `src/app.py` evaluable: el del equipo o, si no hay uno propio, el servicio mínimo del curso.
+
+    El servicio mínimo responde con los documentos de `corpus/` y los cita. Se usa cuando falta `src/app.py` o cuando
+    sigue siendo la plantilla del gimnasio. La versión anterior queda en `src/app-plantilla.py`.
+    Devuelve `"team"`, `"minimal"` o `"minimal (sin corpus)"`.
+    """
+    from .files import lab_resource
+
+    root = Path(root)
+    app = root / "src/app.py"
+    if app.exists() and TEMPLATE_NAME not in app.read_text(encoding="utf-8"):
+        return "team"
+    app.parent.mkdir(parents=True, exist_ok=True)
+    if app.exists():
+        app.replace(app.with_name("app-plantilla.py"))
+    app.write_text(lab_resource(7, "minimal_app.py").read_text(encoding="utf-8"), encoding="utf-8")
+    return "minimal" if load_corpus(root / "corpus") else "minimal (sin corpus)"
+
+
 def load_eval_cases(path: str | Path) -> list[dict]:
     """Los casos del Hito 1 (`eval/cases.jsonl`): `id`, `task` (`answer` o `extract`), `input` y `expected`.
 

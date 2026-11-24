@@ -41,6 +41,7 @@ Guarda una copia del notebook en tu Drive y ejecuta la celda de instalación (al
 
 - `MODEL` es el modelo de su servicio: en clase, `curso:course-chat` (Gemma 4 26B-A4B del servidor del curso); fuera de clase, `google:gemini-3.5-flash-lite`.
 - `JUDGE_MODEL` es el modelo del juez. Conviene que sea distinto del que responde: un modelo tiende a aprobar sus propias respuestas.
+- `DECISION_MODEL` solo si su servicio usa un modelo de decisión, como d1-2B del laboratorio 4: en clase, `d1:curso`; fuera de clase, `d1:colab` con `USE_D1 = True`, que lo levanta en esta sesión (elijan una GPU T4 antes de instalar).
 - `MODE = "simulated"` recorre el notebook sin red; las cifras no significan nada. Para medir, `real`.
 """)
 
@@ -82,9 +83,10 @@ import pandas as pd
 
 from curso_ia import create_model, load_config, save_experiment
 from curso_ia.config import missing
-from curso_ia.evaluation import (answer_metrics, field_metrics, field_status, hito1_baseline, load_adversarial_cases,
-                                 load_corpus, load_eval_cases, load_rows, report_table, run_case, run_costs, save_rows,
-                                 understood, unpack_repository, write_example_repository)
+from curso_ia.evaluation import (answer_metrics, ensure_service, field_metrics, field_status, hito1_baseline,
+                                 load_adversarial_cases, load_corpus, load_eval_cases, load_rows, promote_project,
+                                 report_table, run_case, run_costs, save_rows, understood, unpack_repository,
+                                 write_example_repository)
 from curso_ia.service import check_project, load_app, service_client, show_record
 
 MODE = "simulated"  # @param ["simulated", "real"]
@@ -97,6 +99,10 @@ MODEL = "curso:course-chat"  # @param ["curso:course-chat", "google:gemini-3.5-f
 os.environ["GENERATION_MODEL"] = MODEL
 # Modelo del juez: otro modelo que el del servicio, si se puede.
 JUDGE_MODEL = "google:gemma-4-26b-a4b-it"  # @param ["google:gemma-4-26b-a4b-it", "google:gemini-3.5-flash-lite", "curso:course-chat"]
+# Modelo de decisión, solo si su servicio lo usa (laboratorio 4): "d1:curso" en clase, "d1:colab" fuera de clase.
+DECISION_MODEL = "d1:curso"  # @param ["d1:curso", "d1:colab"]
+os.environ["DECISION_MODEL"] = DECISION_MODEL
+USE_D1 = False  # True levanta d1-2B en esta sesión si DECISION_MODEL es "d1:colab"
 
 # Servidor del curso sin Secretos: descomenta y pega la clave del día que entrega el docente.
 # os.environ["CURSO_BASE_URL"] = "https://tofu.tail07b663.ts.net/v1"
@@ -127,7 +133,9 @@ Con `USE_EXAMPLE = True` el notebook usa el gimnasio de la plantilla, con un con
 | `labs/lab06-service/experiment.json` | sus casos adversariales del Hito 2 |
 | `eval/baseline/outputs.jsonl` | la línea base del Hito 1, si usaron el notebook del Hito 1 |
 
-Si su `app.py` o su conjunto están en otra carpeta del repositorio, muévanlos a esas rutas antes de descargar el ZIP, o súbanlos en el panel **Archivos** de Colab.
+Si su `app.py` y su conjunto quedaron dentro de una carpeta (por ejemplo `Hito 2/`), el notebook la encuentra. Si no, súbanlos en el panel **Archivos** de Colab a esas rutas.
+
+**Si su servicio del Hito 2 todavía no está listo** (no hay `src/app.py` o sigue siendo la plantilla del gimnasio), el notebook escribe un **servicio mínimo**: responde con los documentos de su `corpus/` y los cita, con dos ámbitos y una acción con efecto genérica. Así pueden evaluar su Hito 1 hoy. Es un punto de partida: el Sistema integrador del 02/12 necesita su servicio, con sus herramientas y datos, así que sigan desde ahí (cambien al menos `PROJECT_DESCRIPTION`).
 """)
 
 code(r'''
@@ -148,11 +156,24 @@ elif IN_COLAB:
 else:
     print("Fuera de Colab, copien su repositorio en", ROOT)
 
+if not USE_EXAMPLE:
+    folder = promote_project(ROOT)
+    if folder:
+        print(f"Se usó la carpeta {folder}/ del repositorio.")
+    service_kind = ensure_service(ROOT)
+    if service_kind != "team":
+        print(f"No hay un servicio propio en src/app.py: se escribió el servicio mínimo del curso ({service_kind}).")
+
 for path in ("src/app.py", "eval/cases.jsonl", "corpus", "labs/lab06-service/experiment.json", "eval/baseline/outputs.jsonl"):
     print("✓" if (ROOT / path).exists() else "✗", path)
 ''')
 
 code(r'''
+if USE_D1 and DECISION_MODEL == "d1:colab" and config.mode == "real":
+    from curso_ia.decision import start_d1
+
+    start_d1()  # unos minutos la primera vez: descarga llama.cpp y d1-2B
+
 team = load_app(ROOT / "src/app.py")  # vuelve a leer el archivo cada vez
 problems = check_project(team.project)
 print("Cumple el contrato." if not problems else "Falta:\n- " + "\n- ".join(problems))
@@ -276,8 +297,10 @@ class Fields(Evaluator):
     def evaluate(self, ctx: EvaluatorContext) -> dict:
         status = field_status(ctx.expected_output, ctx.output["seen"], FIELD_MAP)
         used = [kind for kind in status.values() if kind != "not_used"]
-        return {"fields_correct": sum(kind == "correct" for kind in used) / len(used) if used else 0.0,
-                "fields_used": len(used) / len(status) if status else 0.0}
+        scores = {"fields_used": len(used) / len(status) if status else 0.0}
+        if used:  # sin campos usados no hay nada que acertar: se ve en fields_used, no como error
+            scores["fields_correct"] = sum(kind == "correct" for kind in used) / len(used)
+        return scores
 
 
 @dataclass
@@ -453,14 +476,19 @@ def rates(rows: dict, table: pd.DataFrame) -> dict:
 
 def gate_table(rows: dict, table: pd.DataFrame, label: str) -> pd.DataFrame:
     values = rates(rows, table)
+    # Una métrica sin casos (por ejemplo, sin adversariales) queda «sin datos»: ni pasa ni falla.
     return pd.DataFrame([{"version": label, "metric": name, "value": None if values[name] is None else round(values[name], 3),
-                          "threshold": threshold, "passes": values[name] is not None and values[name] >= threshold}
+                          "threshold": threshold, "passes": None if values[name] is None else bool(values[name] >= threshold)}
                          for name, threshold in GATE.items()])
 
 
 gate_v1 = gate_table(rows_v1, table_v1, "v1")
 display(gate_v1)
-print("La v1 pasa la puerta." if gate_v1["passes"].all() else "La v1 no pasa la puerta en: " + ", ".join(gate_v1.loc[~gate_v1["passes"], "metric"]))
+failing = gate_v1.loc[gate_v1["passes"] == False, "metric"].tolist()
+without_data = gate_v1.loc[gate_v1["passes"].isna(), "metric"].tolist()
+print("La v1 pasa la puerta." if not failing else "La v1 no pasa la puerta en: " + ", ".join(failing))
+if without_data:
+    print("Sin datos para:", ", ".join(without_data))
 ''')
 
 md("""

@@ -3,11 +3,12 @@
 import io
 import json
 import zipfile
+from pathlib import Path
 
 import pytest
 
-from curso_ia.evaluation import (EXAMPLE_CASES, answer_metrics, citation_flags, field_metrics, field_status,
-                                 hito1_baseline, load_adversarial_cases, load_corpus, load_eval_cases, load_rows,
+from curso_ia.evaluation import (EXAMPLE_CASES, answer_metrics, citation_flags, ensure_service, field_metrics,
+                                 field_status, hito1_baseline, promote_project, load_adversarial_cases, load_corpus, load_eval_cases, load_rows,
                                  run_case, same_value, save_rows, understood, unpack_repository,
                                  write_example_repository)
 
@@ -93,3 +94,59 @@ async def test_run_case_against_the_template_service(tmp_path, monkeypatch):
     assert rejected["status"] == "rejected" and rejected["controls"] == ["rejected_request"]
     save_rows({"e-01": row}, tmp_path / "out.jsonl")
     assert load_rows(tmp_path / "out.jsonl")["e-01"]["run_id"] == row["run_id"]
+
+
+def test_promote_project_from_a_subfolder(tmp_path):
+    (tmp_path / "Hito 2/src").mkdir(parents=True)
+    (tmp_path / "Hito 2/src/app.py").write_text("x = 1")
+    (tmp_path / "Hito 2/labs/lab06-service").mkdir(parents=True)
+    (tmp_path / "Hito 2/labs/lab06-service/experiment.json").write_text("{}")
+    (tmp_path / "eval").mkdir()
+    (tmp_path / "eval/cases.jsonl").write_text("")
+    assert promote_project(tmp_path) == "Hito 2"
+    assert (tmp_path / "src/app.py").read_text() == "x = 1" and (tmp_path / "labs/lab06-service/experiment.json").exists()
+    assert promote_project(tmp_path) is None  # ya está en la raíz
+
+
+def test_ensure_service_keeps_the_team_app_and_replaces_the_template(tmp_path):
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src/app.py").write_text("project = 'propio'")
+    assert ensure_service(tmp_path) == "team"
+    write_example_repository(tmp_path)  # deja la plantilla del gimnasio y corpus/
+    assert ensure_service(tmp_path) == "minimal"
+    assert (tmp_path / "src/app-plantilla.py").exists() and "servicio-minimo" in (tmp_path / "src/app.py").read_text()
+
+
+async def test_minimal_service_meets_the_contract_and_passes_its_tests(tmp_path, monkeypatch):
+    import subprocess
+    import sys
+
+    from curso_ia import load_config
+    from curso_ia.service import check_project, create_app, load_app, service_client, write_contract_tests
+
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "corpus").mkdir()
+    (tmp_path / "corpus/politica.md").write_text("# Plazos\n\nEl plazo para reclamar es de 10 días.\n")
+    assert ensure_service(tmp_path) == "minimal"
+    module = load_app(tmp_path / "src/app.py")
+    assert check_project(module.project) == [] and module.DOCUMENTS
+    deps = module.ScopedData("publico")
+
+    class Ctx:
+        pass
+
+    ctx = Ctx()
+    ctx.deps = deps
+    found = module.search_documents(ctx, "plazo para reclamar")
+    assert found[0]["doc_id"] == "politica" and deps.retrieved
+    answer = module.Answer(action="answered", reply="10 días.", citations=[
+        module.Citation(doc_id="politica", quote="El plazo para reclamar es de 10 días.")])
+    assert module.check_answer(ctx, answer) is answer
+    app = create_app(module.project, config=load_config(tmp_path, env={"CURSO_MODE": "simulated"}), trace_path=None)
+    async with service_client(app) as client:
+        assert (await client.post("/agent/run", json={"goal": "Prueba", "scope": "interno"})).json()["status"] == "pending_approval"
+    write_contract_tests(tmp_path)
+    result = subprocess.run([sys.executable, "-m", "pytest", "-q", "tests/test_contract.py"], cwd=tmp_path,
+                            capture_output=True, text=True, env={"CURSO_MODE": "simulated", "PATH": "/usr/bin:/bin",
+                                                                 "PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")})
+    assert result.returncode == 0, result.stdout[-1500:]
