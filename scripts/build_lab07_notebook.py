@@ -276,7 +276,9 @@ class Abstention(Evaluator):
     def evaluate(self, ctx: EvaluatorContext) -> EvaluationReason:
         should = not ctx.expected_output["answerable"]
         did = ctx.output["abstained"]
-        how = "se abstuvo" if did else ("respondió en texto, sin citas" if ctx.output["text_reply"] else "respondió")
+        how = ("terminó en error: " + str(ctx.output["error"])[:80] if ctx.output["status"] == "error"
+               else "quedó esperando una aprobación" if ctx.output["status"] == "pending_approval"
+               else "se abstuvo" if did else "respondió en texto, sin citas" if ctx.output["text_reply"] else "respondió")
         return EvaluationReason(did == should, f"esperaba {'abstenerse' if should else 'responder'}; {how}")
 
 
@@ -345,7 +347,7 @@ REPLAY: dict[str, dict] | None = None  # filas guardadas: si no es None, la tare
 def summarize(row: dict) -> dict:
     """Lo que miran los evaluadores: la respuesta leída, lo entendido o los controles que actuaron."""
     if row["task"] == "answer":
-        return {"status": row["status"], **read_answer(row["output"], row.get("output_kind"))}
+        return {"status": row["status"], "error": row.get("error"), **read_answer(row["output"], row.get("output_kind"))}
     if row["task"] == "extract":
         return {"status": row["status"], "seen": understood(row, extraction_tools=EXTRACTION_TOOLS)}
     return {"status": row["status"], "controls": row["controls"]}
@@ -378,7 +380,7 @@ display(table_v1.drop(columns=[c for c in table_v1 if c.endswith("_reason")]))
 ''')
 
 md("""
-Las mismas métricas del Hito 1, calculadas solo con las salidas guardadas, junto a su línea base. Si su línea base no se puede leer (otro formato), escriban sus cifras en `HITO1_MANUAL`, copiadas de su informe del Hito 1.
+Las mismas métricas del Hito 1, calculadas solo con las salidas guardadas, junto a su línea base. Un caso que terminó en error (por ejemplo, porque su `check_answer` rechazó la salida en todos los reintentos) cuenta como no respondido: la columna `errors` de la tabla de costos dice cuántos hubo. Si su línea base no se puede leer (otro formato), escriban sus cifras en `HITO1_MANUAL`, copiadas de su informe del Hito 1.
 """)
 
 code(r'''
