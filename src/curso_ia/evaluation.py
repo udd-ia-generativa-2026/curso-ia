@@ -174,8 +174,9 @@ async def run_case(client, inputs: dict, *, wait_s: float = 0.0) -> dict:
     else:
         body = response.json()
         record = (await client.get(body["trace_url"])).json()
-        row.update(status=body["status"], run_id=body["run_id"], output=body["output"], record=record,
-                   error=body["error"], controls=_controls(body, record))
+        row.update(status=body["status"], run_id=body["run_id"], output=body["output"],
+                   output_kind=body.get("output_kind"), record=record, error=body["error"],
+                   controls=_controls(body, record))
     if wait_s:
         await asyncio.sleep(wait_s)
     return row

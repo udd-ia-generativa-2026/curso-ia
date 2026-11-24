@@ -190,6 +190,8 @@ El Hito 1 evaluó componentes sueltos: una extracción y unas respuestas con fue
 - **Casos `extract`:** la extracción ya no es una tarea aparte: ocurre cuando el agente lee el mensaje y llena los argumentos de sus herramientas. `understood` junta de la traza esos argumentos y los campos de la salida tipada. Si su servicio usa otro nombre para un campo del Hito 1, tradúzcanlo en `FIELD_MAP`. Si tienen una herramienta que extrae datos del mensaje (no una consulta a su base de datos), pónganla en `EXTRACTION_TOOLS` para que también cuente lo que devuelve.
 - **Casos adversariales:** se comparan los controles que actuaron con el que esperaban, como en el laboratorio 6.
 
+**Respuestas en texto.** El contrato deja que el agente conteste en texto libre para pedir un dato que falta. Si lo usa para responder una pregunta, la respuesta sale sin su salida tipada, sin citas y sin pasar por sus reglas en código (`check_answer`). `read_answer` la cuenta como una respuesta sin citas, y la tabla de la sección 5 dice cuántas hubo. Si son muchas, es un buen candidato para su cambio de la sección 9.
+
 Un campo que ninguna herramienta usa queda como `not_used`: no es un error del servicio, pero es un hallazgo. Quizás el campo no hacía falta, o quizás el servicio lo debería usar.
 """)
 
@@ -198,9 +200,11 @@ code(r'''
 ABSTAIN_ACTIONS = {"needs_human", "no_evidence"}
 
 
-def read_answer(output: dict | None) -> dict:
+def read_answer(output: dict | None, output_kind: str | None = "typed") -> dict:
     """La salida del servicio como la mide el Hito 1. Ajústenla a los campos de su salida tipada."""
     output = output or {}
+    if output_kind == "text":  # respondió en texto libre: sin citas ni reglas de la salida tipada
+        return {"answer": output.get("reply", ""), "citations": [], "abstained": False, "text_reply": True}
     citations = []
     for citation in output.get("citations") or []:
         if isinstance(citation, dict):  # {"doc_id": ..., "quote": ...} u otros nombres
@@ -213,7 +217,8 @@ def read_answer(output: dict | None) -> dict:
     # Una respuesta sin citas no está respaldada por los documentos: cuenta como abstención, como en el Hito 1.
     abstained = (output.get("abstained") is True or output.get("needs_human") is True
                  or output.get("action") in ABSTAIN_ACTIONS or not citations)
-    return {"answer": output.get("reply") or output.get("answer") or "", "citations": citations, "abstained": abstained}
+    return {"answer": output.get("reply") or output.get("answer") or "", "citations": citations, "abstained": abstained,
+            "text_reply": False}
 
 
 FIELD_MAP = {}  # nombre en el Hito 1 → nombre en el servicio, por ejemplo {"requested_solution": "solution"}
@@ -236,7 +241,7 @@ for case_id in (TRY_ANSWER, TRY_EXTRACT):
     print("\n" + "=" * 20, case_id, "·", case["task"])
     show_record(row["record"]) if row["record"] else print(row["error"])
     if case["task"] == "answer":
-        print("read_answer:", read_answer(row["output"]))
+        print("read_answer:", read_answer(row["output"], row.get("output_kind")))
     else:
         seen = understood(row, extraction_tools=EXTRACTION_TOOLS)
         print("understood:", seen)
@@ -271,8 +276,8 @@ class Abstention(Evaluator):
     def evaluate(self, ctx: EvaluatorContext) -> EvaluationReason:
         should = not ctx.expected_output["answerable"]
         did = ctx.output["abstained"]
-        return EvaluationReason(did == should, f"esperaba {'abstenerse' if should else 'responder'}; "
-                                                f"{'se abstuvo' if did else 'respondió'}")
+        how = "se abstuvo" if did else ("respondió en texto, sin citas" if ctx.output["text_reply"] else "respondió")
+        return EvaluationReason(did == should, f"esperaba {'abstenerse' if should else 'responder'}; {how}")
 
 
 @dataclass
@@ -340,7 +345,7 @@ REPLAY: dict[str, dict] | None = None  # filas guardadas: si no es None, la tare
 def summarize(row: dict) -> dict:
     """Lo que miran los evaluadores: la respuesta leída, lo entendido o los controles que actuaron."""
     if row["task"] == "answer":
-        return {"status": row["status"], **read_answer(row["output"])}
+        return {"status": row["status"], **read_answer(row["output"], row.get("output_kind"))}
     if row["task"] == "extract":
         return {"status": row["status"], "seen": understood(row, extraction_tools=EXTRACTION_TOOLS)}
     return {"status": row["status"], "controls": row["controls"]}
@@ -378,7 +383,7 @@ Las mismas métricas del Hito 1, calculadas solo con las salidas guardadas, junt
 
 code(r'''
 def answers_of(rows):
-    return {case_id: read_answer(row["output"]) for case_id, row in rows.items() if row["task"] == "answer"}
+    return {case_id: read_answer(row["output"], row.get("output_kind")) for case_id, row in rows.items() if row["task"] == "answer"}
 
 
 def statuses_of(rows):
@@ -397,6 +402,8 @@ fields_table = pd.concat([baseline[1] if baseline else pd.DataFrame(),
 display(answers_table)
 display(fields_table)
 display(run_costs(rows_v1, "servicio · v1"))
+text_replies = [case_id for case_id, answer in answers_of(rows_v1).items() if answer["text_reply"]]
+print(f"Respuestas en texto libre, sin salida tipada ni citas: {len(text_replies)} de {len(answers_of(rows_v1))}", text_replies[:10])
 ''')
 
 md("""
