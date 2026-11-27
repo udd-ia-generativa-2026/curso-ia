@@ -5,10 +5,11 @@ import json
 import zipfile
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
-from curso_ia.evaluation import (EXAMPLE_CASES, answer_metrics, citation_flags, ensure_service, field_metrics,
-                                 field_status, hito1_baseline, promote_project, load_adversarial_cases, load_corpus, load_eval_cases, load_rows,
+from curso_ia.evaluation import (EXAMPLE_CASES, answer_metrics, citation_flags, ensure_service, evaluator_summary,
+                                 field_metrics, field_status, hito1_baseline, promote_project, load_adversarial_cases, load_corpus, load_eval_cases, load_rows,
                                  run_case, same_value, save_rows, understood, unpack_repository,
                                  write_example_repository)
 
@@ -106,6 +107,33 @@ def test_promote_project_from_a_subfolder(tmp_path):
     assert promote_project(tmp_path) == "Hito 2"
     assert (tmp_path / "src/app.py").read_text() == "x = 1" and (tmp_path / "labs/lab06-service/experiment.json").exists()
     assert promote_project(tmp_path) is None  # ya está en la raíz
+
+
+def test_promote_project_prefers_a_subfolder_service_over_the_template_at_the_root(tmp_path):
+    # Como el equipo B: la plantilla del gimnasio quedó en src/ y su servicio, en Hito 2/src/.
+    (tmp_path / "src").mkdir()
+    (tmp_path / "src/app.py").write_text('name="gimnasio-dos-sedes"')
+    (tmp_path / "Hito 2/src").mkdir(parents=True)
+    (tmp_path / "Hito 2/src/app.py").write_text("x = 1")
+    (tmp_path / "eval").mkdir()
+    (tmp_path / "eval/cases.jsonl").write_text("")
+    assert promote_project(tmp_path) == "Hito 2"
+    assert (tmp_path / "src/app.py").read_text() == "x = 1"
+    assert "gimnasio-dos-sedes" in (tmp_path / "src/app-plantilla.py").read_text()
+    assert ensure_service(tmp_path) == "team"
+
+
+def test_evaluator_summary_counts_assertions_and_averages_scores():
+    table = pd.DataFrame([
+        {"case": "q-01", "task": "answer", "Abstention": True, "LLMJudge": True, "LLMJudge_reason": "bien"},
+        {"case": "q-02", "task": "answer", "Abstention": False, "LLMJudge": None, "LLMJudge_error": "sin clave"},
+        {"case": "e-01", "task": "extract", "fields_used": 0.5, "fields_correct": 1.0},
+    ])
+    summary = evaluator_summary(table).set_index("evaluator")
+    assert summary.loc["Abstention", "result"] == "1 de 2 pasan"
+    assert summary.loc["LLMJudge", "cases"] == 1
+    assert summary.loc["fields_used", "result"] == "promedio 0.50"
+    assert "LLMJudge_error" not in summary.index
 
 
 def test_ensure_service_keeps_the_team_app_and_replaces_the_template(tmp_path):

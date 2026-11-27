@@ -25,6 +25,7 @@ from pathlib import Path
 from statistics import median
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from .service import _controls
@@ -59,17 +60,24 @@ def unpack_repository(content: bytes, root: str | Path) -> list[str]:
 
 def promote_project(root: str | Path) -> str | None:
     """Si `src/app.py` o `eval/cases.jsonl` quedaron dentro de una subcarpeta del ZIP (por ejemplo `Hito 2/`), copiar
-    esa subcarpeta a la raíz sin reemplazar lo que ya está. Devuelve la subcarpeta usada o `None`."""
+    esa subcarpeta a la raíz sin reemplazar lo que ya está. Devuelve la subcarpeta usada o `None`.
+
+    Un `src/app.py` de la raíz que sigue siendo la plantilla del gimnasio no cuenta como servicio: si una subcarpeta
+    trae uno propio, la plantilla pasa a `src/app-plantilla.py` y se usa el de la subcarpeta (equipo B, 27/11/2026).
+    """
     root = Path(root)
     promoted = None
     for target in ("src/app.py", "eval/cases.jsonl"):
-        if (root / target).exists():
+        candidates = sorted(path for path in root.rglob(Path(target).name)
+                            if path.parent.name == Path(target).parent.name and "__MACOSX" not in path.parts
+                            and path != root / target)
+        if target == "src/app.py":
+            candidates = [path for path in candidates if not _is_template(path)]
+            if (root / target).exists() and _is_template(root / target) and candidates:
+                (root / target).replace(root / "src/app-plantilla.py")
+        if (root / target).exists() or not candidates:
             continue
-        found = sorted(path for path in root.rglob(Path(target).name)
-                       if path.parent.name == Path(target).parent.name and "__MACOSX" not in path.parts)
-        if not found:
-            continue
-        base = found[0].parent.parent
+        base = candidates[0].parent.parent
         for path in base.rglob("*"):
             destination = root / path.relative_to(base)
             if path.is_file() and not destination.exists():
@@ -80,6 +88,10 @@ def promote_project(root: str | Path) -> str | None:
 
 
 TEMPLATE_NAME = "gimnasio-dos-sedes"  # el proyecto de la plantilla del laboratorio 6
+
+
+def _is_template(app: Path) -> bool:
+    return TEMPLATE_NAME in app.read_text(encoding="utf-8", errors="ignore")
 
 
 def ensure_service(root: str | Path) -> str:
@@ -93,7 +105,7 @@ def ensure_service(root: str | Path) -> str:
 
     root = Path(root)
     app = root / "src/app.py"
-    if app.exists() and TEMPLATE_NAME not in app.read_text(encoding="utf-8"):
+    if app.exists() and not _is_template(app):
         return "team"
     app.parent.mkdir(parents=True, exist_ok=True)
     if app.exists():
@@ -415,10 +427,60 @@ def report_table(report) -> pd.DataFrame:
             row[name] = result.value
         for name, result in case.labels.items():
             row[name] = result.value
+        for failure in getattr(case, "evaluator_failures", []):  # por ejemplo, el juez sin clave o sin cuota
+            row[f"{failure.name}_error"] = failure.error_message[:200]
         rows.append(row)
     for case in getattr(report, "failures", []):
         rows.append({"case": case.name, "task": (case.metadata or {}).get("task"), "error": case.error_message[:200]})
     return pd.DataFrame(rows)
+
+
+TASK_TITLES = {
+    "answer": "Casos answer: respuestas con fuentes",
+    "extract": "Casos extract: campos que el servicio usó del mensaje",
+    "adversarial": "Casos adversariales: control que actuó",
+}
+_NOT_EVALUATORS = ("case", "task", "category", "error")
+
+
+def evaluator_summary(table: pd.DataFrame) -> pd.DataFrame:
+    """Por tipo de caso y evaluador: cuántos casos revisó y cuántos pasan (o el promedio, si es un puntaje)."""
+    rows = []
+    for task in TASKS:
+        part = table[table["task"] == task]
+        for column in part.columns:
+            if column in _NOT_EVALUATORS or column.endswith(("_reason", "_error")):
+                continue
+            values = part[column].dropna()
+            if values.empty:
+                continue
+            if all(isinstance(value, (bool, np.bool_)) for value in values):
+                result = f"{int(sum(bool(value) for value in values))} de {len(values)} pasan"
+            else:
+                result = f"promedio {float(values.mean()):.2f}"
+            rows.append({"task": task, "evaluator": column, "cases": len(values), "result": result})
+    return pd.DataFrame(rows, columns=["task", "evaluator", "cases", "result"])
+
+
+def show_report(table: pd.DataFrame, label: str = "") -> None:
+    """El reporte por partes, con un título cada una: un resumen por evaluador y una tabla por tipo de caso, solo con
+    las columnas de los evaluadores que revisan ese tipo. Los motivos quedan en el CSV y se leen en las secciones 6 y 8."""
+    from IPython.display import display
+
+    suffix = f" · {label}" if label else ""
+    print(f"Resumen{suffix}: cuántos casos pasan cada evaluador")
+    display(evaluator_summary(table))
+    crashed = table[table["error"].notna()] if "error" in table else table.iloc[0:0]
+    for task, title in TASK_TITLES.items():
+        part = table[(table["task"] == task) & ~table.index.isin(crashed.index)].dropna(axis=1, how="all")
+        if part.empty:
+            continue
+        columns = [c for c in part if c not in ("task", "error") and not c.endswith("_reason")]
+        print(f"\n{title}{suffix} ({len(part)} casos)")
+        display(part[columns].reset_index(drop=True))
+    if len(crashed):
+        print(f"\nCasos que no se pudieron evaluar{suffix} ({len(crashed)}): la tarea falló antes de los evaluadores")
+        display(crashed[["case", "task", "error"]].reset_index(drop=True))
 
 
 # Ejemplo: el gimnasio de la plantilla del laboratorio 6 -------------------------------------------

@@ -84,8 +84,8 @@ from curso_ia import create_model, load_config, save_experiment
 from curso_ia.config import missing
 from curso_ia.evaluation import (answer_metrics, ensure_service, field_metrics, field_status, hito1_baseline,
                                  load_adversarial_cases, load_corpus, load_eval_cases, load_rows, promote_project,
-                                 report_table, run_case, run_costs, save_rows, understood, unpack_repository,
-                                 write_example_repository)
+                                 report_table, run_case, run_costs, save_rows, show_report, understood,
+                                 unpack_repository, write_example_repository)
 from curso_ia.service import check_project, load_app, service_client, show_record
 
 MODE = "simulated"  # @param ["simulated", "real"]
@@ -124,7 +124,7 @@ Con `USE_EXAMPLE = True` el notebook usa el gimnasio de la plantilla, con un con
 | --- | --- |
 | `src/app.py` | su servicio del Hito 2 |
 | `eval/cases.jsonl` | su conjunto del Hito 1: `id`, `task` (`answer` o `extract`), `input` y `expected`; `scope` y `category` son opcionales |
-| `corpus/` | los documentos que se citan; el nombre del archivo sin extensión es el `doc_id` |
+| `corpus/` | los documentos que se citan; el nombre del archivo sin extensión es el `doc_id`. Si sus documentos viven en otro lugar (dentro de `app.py` o en un JSONL), las citas se reconocen por el nombre del documento |
 | `labs/lab06-service/experiment.json` | sus casos adversariales del Hito 2 |
 | `eval/baseline/outputs.jsonl` | la línea base del Hito 1, si usaron el notebook del Hito 1 |
 
@@ -132,7 +132,7 @@ Su servicio se evalúa tal como está: si usa otros modelos por dentro, como d1-
 
 Si su `app.py` y su conjunto quedaron dentro de una carpeta (por ejemplo `Hito 2/`), el notebook la encuentra. Si no, súbanlos en el panel **Archivos** de Colab a esas rutas.
 
-**Si su servicio del Hito 2 todavía no está listo** (no hay `src/app.py` o sigue siendo la plantilla del gimnasio), el notebook escribe un **servicio mínimo**: responde con los documentos de su `corpus/` y los cita, con dos ámbitos y una acción con efecto genérica. Así pueden evaluar su Hito 1 hoy. Es un punto de partida: el Sistema integrador del 02/12 necesita su servicio, con sus herramientas y datos, así que sigan desde ahí (cambien al menos `PROJECT_DESCRIPTION`).
+**Si su servicio del Hito 2 todavía no está listo** (no hay `src/app.py` o sigue siendo la plantilla del gimnasio), el notebook escribe un **servicio mínimo**: responde con los documentos de su `corpus/` y los cita, con dos ámbitos y una acción con efecto genérica. Así pueden evaluar su Hito 1 hoy. Es un punto de partida: el Sistema integrador del 02/12 necesita su servicio, con sus herramientas y datos, así que sigan desde ahí. Lo primero es cambiar `PROJECT_DESCRIPTION`, la primera constante de ese `src/app.py`: una frase sobre qué hace su sistema y para quién, que el agente recibe en sus instrucciones y que `GET /schema` muestra como descripción del servicio.
 """)
 
 code(r'''
@@ -179,6 +179,8 @@ corpus = load_corpus(ROOT / "corpus")
 adversarial_cases = load_adversarial_cases(ROOT)
 print(f"{sum(c['task'] == 'answer' for c in cases)} casos answer, {sum(c['task'] == 'extract' for c in cases)} extract, "
       f"{len(adversarial_cases)} adversariales; corpus: {len(corpus)} documentos")
+if not corpus:
+    print("No hay documentos en corpus/: las citas se reconocen por el nombre del documento y no se verifica la frase citada.")
 ''')
 
 md("""
@@ -186,16 +188,20 @@ md("""
 
 El Hito 1 evaluó componentes sueltos: una extracción y unas respuestas con fuentes. Ahora todo pasa por `POST /agent/run`, así que cada caso entra como un pedido al servicio y hay que leer lo que devuelve:
 
-- **Casos `answer`:** la salida tipada de cada equipo es distinta. `read_answer` la traduce a lo que mide el Hito 1: el texto de la respuesta, las citas (`doc_id` y la frase citada, `quote`) y si se abstuvo. **Ajústenla a su salida.**
+- **Casos `answer`:** la salida tipada de cada equipo es distinta. `read_answer` la traduce a lo que mide el Hito 1: el texto de la respuesta, las citas (`doc_id` y la frase citada, `quote`) y si se abstuvo. Funciona sin cambios si su salida usa `reply`, `citations` y `action="needs_human"` para derivar, como la plantilla del laboratorio 6, con citas como `"reglamento.md · Congelamiento"`, `"bases-v2/cierre"` o `{"doc_id": ..., "quote": ...}`. Si su salida usa otros nombres, ajústenla.
 - **Casos `extract`:** la extracción ya no es una tarea aparte: ocurre cuando el agente lee el mensaje y llena los argumentos de sus herramientas. `understood` junta de la traza esos argumentos y los campos de la salida tipada. Si su servicio usa otro nombre para un campo del Hito 1, tradúzcanlo en `FIELD_MAP`. Si tienen una herramienta que extrae datos del mensaje (no una consulta a su base de datos), pónganla en `EXTRACTION_TOOLS` para que también cuente lo que devuelve.
 - **Casos adversariales:** se comparan los controles que actuaron con el que esperaban, como en el laboratorio 6.
 
 **Respuestas en texto.** El contrato deja que el agente conteste en texto libre para pedir un dato que falta. Si lo usa para responder una pregunta, la respuesta sale sin su salida tipada, sin citas y sin pasar por sus reglas en código (`check_answer`). `read_answer` la cuenta como una respuesta sin citas, y la tabla de la sección 5 dice cuántas hubo. Si son muchas, es un buen candidato para su cambio de la sección 9.
 
 Un campo que ninguna herramienta usa queda como `not_used`: no es un error del servicio, pero es un hallazgo. Quizás el campo no hacía falta, o quizás el servicio lo debería usar.
+
+**Ámbito de cada caso.** Cada caso corre en el ámbito de su campo `scope`; los que no lo traen corren en `EVAL_SCOPE`, el primer ámbito del servicio. Si sus ámbitos tienen datos distintos (pedidos de otra tienda, documentos internos), agreguen `scope` a esos casos en `eval/cases.jsonl` y vuelvan a subirlo: un pedido de otro ámbito no se encuentra y el caso falla por el ámbito, no por el modelo.
 """)
 
 code(r'''
+import re
+
 # Abstenerse: no responder la pregunta, porque no hay evidencia o porque la deriva a una persona.
 ABSTAIN_ACTIONS = {"needs_human", "no_evidence"}
 
@@ -210,9 +216,11 @@ def read_answer(output: dict | None, output_kind: str | None = "typed") -> dict:
         if isinstance(citation, dict):  # {"doc_id": ..., "quote": ...} u otros nombres
             citations.append({"doc_id": citation.get("doc_id") or citation.get("source") or "",
                               "quote": citation.get("quote") or citation.get("text") or ""})
-        else:  # un texto como "reglamento.md · Congelamiento": se busca el documento citado
-            text = str(citation)
-            doc_id = next((doc for doc in corpus if doc.casefold() in text.casefold()), text)
+        else:  # un texto como "reglamento.md · Congelamiento" o "bases-v2/cierre": se busca el documento citado
+            text = str(citation).strip()
+            known = [doc for doc in corpus if doc.casefold() in text.casefold()]
+            # El nombre más largo que aparece («faq-v2» antes que «faq»); sin corpus/, lo que va antes de « · », «#» o «/».
+            doc_id = max(known, key=len) if known else re.split(r"\s*(?:·|#|/|\|)\s*|\s+[-—]\s+", text, maxsplit=1)[0]
             citations.append({"doc_id": doc_id, "quote": ""})
     # Una respuesta sin citas no está respaldada por los documentos: cuenta como abstención, como en el Hito 1.
     abstained = (output.get("abstained") is True or output.get("needs_human") is True
@@ -223,7 +231,7 @@ def read_answer(output: dict | None, output_kind: str | None = "typed") -> dict:
 
 FIELD_MAP = {}  # nombre en el Hito 1 → nombre en el servicio, por ejemplo {"requested_solution": "solution"}
 EXTRACTION_TOOLS = ()  # herramientas cuyo resultado es una extracción del mensaje, por ejemplo ("extract_request",)
-EVAL_SCOPE = schema["scopes"][0]  # ámbito para los casos que no traen "scope"
+EVAL_SCOPE = schema["scopes"][0]  # ámbito para los casos que no traen "scope" en eval/cases.jsonl
 ''')
 
 md("""
@@ -367,6 +375,15 @@ md("""
 ## 5. La línea base del servicio
 
 La celda corre todos los casos contra su servicio, uno a la vez, y guarda cada respuesta con su traza en `labs/lab07-eval/outputs-v1.jsonl`. Con Gemini tarda unos 12 segundos por caso por el límite por minuto; con el servidor del curso, mucho menos. Las acciones con efecto no se aprueban: la traza guarda lo que el agente pidió hacer.
+
+El resultado es `table_v1`, una fila por caso y una columna por evaluador, que se guarda en `report-v1.csv`. Como cada evaluador revisa solo un tipo de caso, la celda la muestra por partes:
+
+- **Resumen:** por tipo de caso y evaluador, cuántos casos pasan (o el promedio, en `fields_used` y `fields_correct`).
+- **Casos `answer`:** `Abstention` y `CorrectSource` (`True` pasa, `False` falla; `CorrectSource` va vacío en las preguntas sin respuesta) y el veredicto del juez, `LLMJudge`.
+- **Casos `extract`:** `fields_used`, la parte de los campos esperados que el servicio usó, y `fields_correct`, la parte correcta entre esos.
+- **Casos adversariales:** `ExpectedControl`, si actuó el control esperado.
+
+Los motivos de cada evaluador (columnas `_reason` del CSV) se leen en las secciones 6 y 8.
 """)
 
 code(r'''
@@ -376,7 +393,7 @@ rows_v1 = dict(ROWS)
 save_rows(rows_v1, OUTPUT / "outputs-v1.jsonl")
 table_v1 = report_table(report_v1)
 table_v1.to_csv(OUTPUT / "report-v1.csv", index=False)
-display(table_v1.drop(columns=[c for c in table_v1 if c.endswith("_reason")]))
+show_report(table_v1, "v1")
 ''')
 
 md("""
@@ -397,15 +414,21 @@ baseline = hito1_baseline(ROOT, cases, corpus)
 HITO1_MANUAL = {
     # Solo si baseline es None. Por ejemplo: "correct_abstention": "5/6", "answered": "22/24", "with_correct_source": "18/24"
 }
-answers_table = pd.concat([baseline[0] if baseline else pd.DataFrame([{"version": "Hito 1 · informe", **HITO1_MANUAL}]),
-                           answer_metrics(cases, answers_of(rows_v1), corpus, "servicio · v1")])
+manual = pd.DataFrame([{"version": "Hito 1 · informe", **HITO1_MANUAL}]) if HITO1_MANUAL else pd.DataFrame()
+answers_table = pd.concat([baseline[0] if baseline else manual, answer_metrics(cases, answers_of(rows_v1), corpus, "servicio · v1")])
 fields_table = pd.concat([baseline[1] if baseline else pd.DataFrame(),
                           field_metrics(cases, statuses_of(rows_v1), "servicio · v1")])
+if baseline is None and not HITO1_MANUAL:
+    print("No se pudo leer eval/baseline/outputs.jsonl: copien sus cifras del Hito 1 en HITO1_MANUAL para compararlas.\n")
+
+print("Respuestas con fuentes: métricas del Hito 1 (aciertos / casos)")
 display(answers_table)
+print("\nCampos de extracción: por campo esperado, cuántos casos quedaron en cada resultado")
 display(fields_table)
+print("\nCosto y latencia por caso, desde las trazas")
 display(run_costs(rows_v1, "servicio · v1"))
 text_replies = [case_id for case_id, answer in answers_of(rows_v1).items() if answer["text_reply"]]
-print(f"Respuestas en texto libre, sin salida tipada ni citas: {len(text_replies)} de {len(answers_of(rows_v1))}", text_replies[:10])
+print(f"\nRespuestas en texto libre, sin salida tipada ni citas: {len(text_replies)} de {len(answers_of(rows_v1))}", text_replies[:10])
 ''')
 
 md("""
@@ -417,19 +440,35 @@ La métrica determinista dice que una respuesta está bien si se abstiene cuando
 - **El juez aprueba y la métrica no:** quizás la respuesta es buena pero citó otro documento que también lo dice, o el juez se dejó convencer por una respuesta segura.
 
 Lean las discrepancias con la traza y decidan a cuál le creen. La pregunta individual del laboratorio va sobre esto.
+
+**Qué devuelve el juez.** Para cada caso `answer`, `LLMJudge` devuelve un veredicto, `True` (aprueba) o `False` (reprueba), con el motivo que escribe el modelo juez. En `table_v1` y en `report-v1.csv` el veredicto está en la columna `LLMJudge` y el motivo en `LLMJudge_reason`. Si el juez no respondió (por ejemplo, sin clave o sin cuota), el error queda en `LLMJudge_error` y ese caso no se compara. `LLMJudge` también puede devolver un puntaje de 0 a 1 (`score=...`); aquí no se usa, porque el veredicto basta para compararlo con la métrica.
+
+La celda muestra lo que dijo el juez en algunos casos, haya o no discrepancias. Si no hay ninguna, lean el motivo del juez en un caso donde ambos aprueban y en uno donde ambos reprueban, y decidan con la traza si el motivo es correcto.
 """)
 
 code(r'''
-answer_rows = table_v1[table_v1["task"] == "answer"].copy()
-if "LLMJudge" in answer_rows:
-    source_ok = answer_rows["CorrectSource"] if "CorrectSource" in answer_rows else pd.Series(True, index=answer_rows.index)
-    answer_rows["metric_ok"] = answer_rows["Abstention"].astype(bool) & source_ok.fillna(True).astype(bool)
-    answer_rows["judge_ok"] = answer_rows["LLMJudge"].fillna(False).astype(bool)
-    disagreements = answer_rows[answer_rows["metric_ok"] != answer_rows["judge_ok"]]
-    print(f"Coinciden en {len(answer_rows) - len(disagreements)} de {len(answer_rows)} casos.")
-    display(disagreements[["case", "category", "metric_ok", "judge_ok", "LLMJudge_reason"]])
-else:
-    print("El juez no corrió: revisen JUDGE_MODEL y sus claves.")
+answer_rows = table_v1[table_v1["task"] == "answer"]
+judged = answer_rows[answer_rows["LLMJudge"].notna()].copy() if "LLMJudge" in answer_rows else answer_rows.iloc[0:0].copy()
+if len(judged) < len(answer_rows):
+    errors = answer_rows["LLMJudge_error"].dropna() if "LLMJudge_error" in answer_rows else []
+    print(f"El juez no respondió en {len(answer_rows) - len(judged)} de {len(answer_rows)} casos: revisen JUDGE_MODEL y sus claves.",
+          errors.iloc[0] if len(errors) else "")
+
+# La métrica aprueba si se abstuvo cuando correspondía y, en las preguntas con respuesta, citó un documento esperado.
+judged["metric_ok"] = judged["Abstention"].eq(True) & (judged["CorrectSource"].ne(False) if "CorrectSource" in judged else True)
+judged["judge_ok"] = judged["LLMJudge"].eq(True)
+disagreements = judged[judged["metric_ok"] != judged["judge_ok"]]
+both_pass = judged[judged["metric_ok"] & judged["judge_ok"]]
+both_fail = judged[~judged["metric_ok"] & ~judged["judge_ok"]]
+print(f"El juez y la métrica coinciden en {len(judged) - len(disagreements)} de {len(judged)} casos y no coinciden en {len(disagreements)}.")
+
+verdict = lambda ok: "aprueba" if ok else "reprueba"
+for title, part in (("Discrepancias", disagreements), ("Ejemplos donde ambos aprueban", both_pass.head(2)),
+                    ("Ejemplos donde ambos reprueban", both_fail.head(2))):
+    print(f"\n{title} ({len(part)}):" if len(part) else f"\n{title}: ninguno.")
+    for _, row in part.iterrows():
+        print(f"- {row['case']} · {row['category']} · métrica: {verdict(row['metric_ok'])} · juez: {verdict(row['judge_ok'])}")
+        print(f"  Motivo del juez: {row.get('LLMJudge_reason') or '(sin motivo)'}")
 ''')
 
 code(r'''
@@ -443,7 +482,13 @@ def show_case(case_id: str, rows: dict | None = None) -> None:
     show_record(row["record"]) if row["record"] else print("Rechazado:", row["error"])
 
 
-CASE_TO_READ = disagreements["case"].iloc[0] if "LLMJudge" in answer_rows and len(disagreements) else TRY_ANSWER
+if len(disagreements):
+    CASE_TO_READ = disagreements["case"].iloc[0]  # cambien el id para leer otra discrepancia
+    print(f"Primera discrepancia entre el juez y la métrica: {CASE_TO_READ}\n")
+else:
+    CASE_TO_READ = (both_fail if len(both_fail) else both_pass if len(both_pass) else answer_rows)["case"].iloc[0]
+    print(f"No hubo discrepancias entre el juez y la métrica. Se muestra {CASE_TO_READ}, un caso donde coinciden, "
+          "para revisar con la traza si el motivo del juez es correcto.\n")
 show_case(CASE_TO_READ)
 ''')
 
@@ -533,10 +578,17 @@ table_v2 = report_table(report_v2)
 table_v2.to_csv(OUTPUT / "report-v2.csv", index=False)
 (OUTPUT / "app-v2.py").write_text((ROOT / "src/app.py").read_text(encoding="utf-8"), encoding="utf-8")
 
+gate_v2 = gate_table(rows_v2, table_v2, "v2")
+
+print("Cambio:", CHANGE or "(falta describirlo en CHANGE)")
+print("\nLa puerta: valor de cada métrica en v1 y v2, junto a su umbral")
+display(pd.concat([gate_v1, gate_v2]).pivot(index="metric", columns="version", values="value").join(pd.Series(GATE, name="threshold")))
+print("\nRespuestas con fuentes: métricas del Hito 1 (aciertos / casos)")
 display(pd.concat([answer_metrics(cases, answers_of(rows_v1), corpus, "v1"), answer_metrics(cases, answers_of(rows_v2), corpus, "v2")]))
+print("\nCampos de extracción: por campo esperado, cuántos casos quedaron en cada resultado")
 display(pd.concat([field_metrics(cases, statuses_of(rows_v1), "v1"), field_metrics(cases, statuses_of(rows_v2), "v2")]))
+print("\nCosto y latencia por caso")
 display(pd.concat([run_costs(rows_v1, "v1"), run_costs(rows_v2, "v2")]))
-display(pd.concat([gate_v1, gate_table(rows_v2, table_v2, "v2")]).pivot(index="metric", columns="version", values="value"))
 ''')
 
 md("""
@@ -546,9 +598,11 @@ Los casos que cambiaron de resultado: miren al menos uno que mejoró y, si hay, 
 code(r'''
 columns = [c for c in ("Abstention", "CorrectSource", "fields_correct", "ExpectedControl", "LLMJudge") if c in table_v1 and c in table_v2]
 compare = table_v1.set_index("case")[columns].join(table_v2.set_index("case")[columns], lsuffix="_v1", rsuffix="_v2")
-text = compare.astype(str)
-changed = compare[[any(text.loc[i, f"{c}_v1"] != text.loc[i, f"{c}_v2"] for c in columns) for i in compare.index]]
-display(changed)
+unchanged = lambda a, b: (pd.isna(a) and pd.isna(b)) or a == b  # vacía en ambas versiones no es un cambio
+changed = compare[[not all(unchanged(compare.loc[i, f"{c}_v1"], compare.loc[i, f"{c}_v2"]) for c in columns) for i in compare.index]]
+print(f"Casos que cambiaron de resultado entre v1 y v2: {len(changed)} de {len(compare)}")
+if len(changed):
+    display(changed.dropna(axis=1, how="all"))
 ''')
 
 md("""
@@ -580,7 +634,8 @@ DECISIONS = {
     "baseline": "",
     # 3. Las categorías de error que más importan según el costo del error en su dominio, con un caso y su traza.
     "errors": "",
-    # 4. Un caso donde el juez y la métrica no coinciden: a cuál le creen y con qué dato.
+    # 4. Un caso donde el juez y la métrica no coinciden: a cuál le creen y con qué dato. Si no hubo ninguno,
+    #    un caso donde coinciden: si el motivo del juez es correcto según la traza.
     "judge": "",
     # 5. El cambio: qué error lo motivó, cifras antes y después en calidad, costo y latencia, y qué empeoró.
     "change": "",
@@ -597,7 +652,7 @@ save_experiment(OUTPUT / "experiment.json", {
     "eval_scope": EVAL_SCOPE, "field_map": FIELD_MAP, "extraction_tools": list(EXTRACTION_TOOLS),
     "read_answer": inspect.getsource(read_answer), "abstain_actions": sorted(ABSTAIN_ACTIONS),
     "judge_rubric": judge.rubric, "gate": GATE, "change": CHANGE,
-    "gate_v1": gate_v1.to_dict("records"), "gate_v2": gate_table(rows_v2, table_v2, "v2").to_dict("records"),
+    "gate_v1": gate_v1.to_dict("records"), "gate_v2": gate_v2.to_dict("records"),
     "decisions": DECISIONS,
 }, config, lab=7)
 answers_table.to_csv(OUTPUT / "metrics-answer-v1.csv", index=False)
