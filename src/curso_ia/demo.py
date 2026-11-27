@@ -4,8 +4,9 @@ La interfaz es una sola página (`/ui`) que usa solo el contrato del curso: lee 
 decisiones a `POST /agent/run` y muestra lo que hizo el servicio con `GET /trace/{id}`. No cambia el contrato ni el
 `app.py` del equipo: `add_ui` agrega la página a la aplicación ya creada.
 
-`serve` levanta la aplicación con uvicorn en un hilo aparte, para que el notebook siga disponible, y muestra el
-enlace. En Colab el enlace pasa por el proxy de Colab, que solo abre quien es dueño de la sesión. Volver a llamar a
+`serve` levanta la aplicación con uvicorn en un hilo aparte, para que el notebook siga disponible. En Colab muestra la
+interfaz dentro de la salida de la celda, por el proxy de Colab: un enlace a otra pestaña no abrió en la prueba
+docente del 27/11/2026. Fuera de Colab imprime la dirección local. Volver a llamar a
 `serve` (por ejemplo, después de cambiar `src/app.py`) detiene el servidor anterior. Si el puerto está ocupado
 por otro programa, se usa el siguiente libre.
 
@@ -42,10 +43,10 @@ def add_ui(app):
     return app
 
 
-def serve(app, port: int = DEFAULT_PORT, *, inline: bool = False, timeout_s: float = 30.0) -> str:
-    """Levantar el servicio con la interfaz en `port` y mostrar el enlace. Devuelve la dirección de la interfaz.
+def serve(app, port: int = DEFAULT_PORT, *, height: int = 820, timeout_s: float = 30.0) -> str:
+    """Levantar el servicio con la interfaz en `port` y mostrarla. Devuelve la dirección local de la interfaz.
 
-    `inline=True` muestra la interfaz dentro de la salida de la celda (solo en Colab), en lugar de un enlace.
+    En Colab la interfaz aparece dentro de la salida de la celda, con `height` píxeles de alto.
     """
     import uvicorn
 
@@ -64,7 +65,7 @@ def serve(app, port: int = DEFAULT_PORT, *, inline: bool = False, timeout_s: flo
             raise RuntimeError(f"El servidor no respondió en {timeout_s:.0f} s.")
         time.sleep(0.05)
     _servers[port] = (server, thread)
-    return _show_link(port, inline)
+    return _show(port, height)
 
 
 def _free_port(port: int, tries: int = 20) -> int:
@@ -99,19 +100,12 @@ def stop(port: int | None = None) -> bool:
     return stopped
 
 
-def _show_link(port: int, inline: bool) -> str:
+def _show(port: int, height: int) -> str:
     local = f"http://127.0.0.1:{port}{UI_PATH}"
     try:
         from google.colab import output  # type: ignore[import-not-found]
     except ImportError:
         print(f"Interfaz: {local}")
         return local
-    if inline:
-        output.serve_kernel_port_as_iframe(port, path=UI_PATH, height=820)
-        return local
-    from IPython.display import HTML, display
-
-    url = output.eval_js(f"google.colab.kernel.proxyPort({port})").rstrip("/") + UI_PATH
-    display(HTML(f'<p><a href="{url}" target="_blank" rel="noopener">Abrir la interfaz del servicio</a> '
-                 f'(se abre en otra pestaña; solo funciona mientras esta sesión de Colab siga abierta)</p>'))
-    return url
+    output.serve_kernel_port_as_iframe(port, path=UI_PATH, height=height)
+    return local
