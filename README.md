@@ -16,6 +16,8 @@ Laboratorio 5: [![Abrir en Colab](https://colab.research.google.com/assets/colab
 
 Laboratorio 6 y Hito 2: [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/lab06/notebooks/lab06.ipynb)
 
+Demostración del 04/12, interfaz común (opcional): [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/demo/notebooks/demo.ipynb)
+
 Hito 1, línea base (apoyo opcional): [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/hito1/notebooks/hito1.ipynb)
 
 La primera celda de cada notebook instala el paquete:
@@ -85,6 +87,12 @@ Comprobaciones: `uv run pytest`; `uv run python scripts/check_lab05.py` ejecuta 
 El notebook `notebooks/lab06.ipynb` recorre el contrato con el ejemplo de Pacífico Sur, escribe `src/app.py` desde una plantilla que ya cumple el contrato, corre `tests/test_contract.py` en modo simulado, corre un caso adversarial por integrante y guarda `trace.jsonl`, `adversarial.csv` y `experiment.json` en `labs/lab06-service/`, con un ZIP para la entrega del Hito 2. Las plantillas `app.py` y `test_contract.py` también están en `src/curso_ia/data/lab06/`. El modelo es `curso:course-chat` en clase y `google:gemini-3.5-flash-lite` fuera de ella. El notebook se regenera con `scripts/build_lab06_notebook.py`.
 
 Comprobaciones: `uv run pytest`; `uv run python scripts/check_lab06.py` ejecuta el notebook completo en modo simulado.
+
+## Demostración del 04/12 · Interfaz común
+
+`curso_ia.demo` agrega a la aplicación de cualquier equipo una página web en `/ui` que usa solo el contrato: lee `/schema` y `/health`, envía pedidos, decisiones de aprobación y consultas complementarias a `POST /agent/run` y muestra las herramientas de cada turno con `GET /trace/{id}`. No cambia el contrato ni el `app.py` del equipo. `serve(app)` levanta el servicio con uvicorn en un hilo y muestra el enlace (en Colab, por su proxy); volver a llamarlo después de editar `src/app.py` reemplaza el servidor anterior, y `stop()` lo detiene. La página está en `src/curso_ia/data/ui/index.html` y muestra todo lo que viene del servicio como texto.
+
+El notebook `notebooks/demo.ipynb` sube el ZIP del repositorio del equipo (o usa el gimnasio de ejemplo), carga `src/app.py` y abre la interfaz. Se regenera con `scripts/build_demo_notebook.py`. Comprobaciones: `uv run pytest tests/test_demo.py`; `uv run python scripts/check_demo.py` ejecuta el notebook completo en modo simulado y llama a la interfaz por HTTP.
 
 ## Hito 1 · Línea base, apoyo opcional
 
