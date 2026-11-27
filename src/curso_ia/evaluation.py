@@ -241,12 +241,25 @@ def understood(row: dict, *, extraction_tools: tuple[str, ...] = ()) -> dict[str
         if step["kind"] in ("tool", "approval_requested", "tool_denied", "retry"):
             add(step.get("args"))
         if step["kind"] == "tool" and step.get("tool") in extraction_tools:
-            try:
-                add(json.loads(step.get("result") or ""))
-            except (json.JSONDecodeError, TypeError):
-                pass
+            add(_tool_result(step.get("result")))
     add(row.get("output"))
     return found
+
+
+_PAIR = re.compile(r'"([^"\\]+)"\s*:\s*("(?:[^"\\]|\\.)*"|-?\d+(?:\.\d+)?|true|false|null)')
+
+
+def _tool_result(text: Any) -> dict:
+    """El resultado de una herramienta, como diccionario. La traza recorta cada resultado a 300 caracteres: si el JSON
+    quedó cortado, se recuperan los pares `"campo": valor` simples que alcanzaron a quedar antes del corte."""
+    try:
+        value = json.loads(text or "")
+        return value if isinstance(value, dict) else {}
+    except (json.JSONDecodeError, TypeError):
+        pairs = {}
+        for key, raw in _PAIR.findall(str(text or "")):
+            pairs.setdefault(key, json.loads(raw))
+        return pairs
 
 
 def same_value(expected: Any, got: Any) -> bool:

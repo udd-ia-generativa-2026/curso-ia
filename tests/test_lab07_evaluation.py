@@ -38,6 +38,16 @@ def test_understood_reads_args_output_and_only_extraction_results():
     assert "product" not in seen  # el resultado de una consulta no es lo que entendió el servicio
 
 
+def test_understood_recovers_fields_from_a_truncated_extraction_result():
+    # La traza recorta el resultado a 300 caracteres: los campos anteriores al corte se recuperan.
+    result = json.dumps({"member_id": "S-103", "months": 2, "ok": True, "note": "x" * 400})[:299] + "…"
+    row = {"output": None, "record": {"steps": [
+        {"kind": "tool", "tool": "extract_request", "args": {"message": "m"}, "result": result}]}}
+    seen = understood(row, extraction_tools=("extract_request",))
+    assert seen["member_id"] == ["S-103"] and seen["months"] == [2] and seen["ok"] == [True]
+    assert "note" not in seen
+
+
 def test_answer_metrics_like_hito1():
     corpus = {"pol": "Los planes mensuales no se congelan."}
     case = {"id": "q", "task": "answer", "expected": {"answerable": True, "evidence": [
