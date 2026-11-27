@@ -16,7 +16,7 @@ Laboratorio 5: [![Abrir en Colab](https://colab.research.google.com/assets/colab
 
 Laboratorio 6 y Hito 2: [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/lab06/notebooks/lab06.ipynb)
 
-Demostración del 04/12, interfaz común (opcional): [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/demo/notebooks/demo.ipynb)
+Demostración del 04/12, interfaz común (opcional): [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/demo-prueba/notebooks/demo.ipynb)
 
 Hito 1, línea base (apoyo opcional): [![Abrir en Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/udd-ia-generativa-2026/curso-ia/blob/hito1/notebooks/hito1.ipynb)
 

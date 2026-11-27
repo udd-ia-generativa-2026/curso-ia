@@ -10,7 +10,7 @@ from pathlib import Path
 import nbformat
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKAGE_REF = "demo"
+PACKAGE_REF = "demo-prueba"
 CELLS: list[tuple[str, str]] = []
 
 
